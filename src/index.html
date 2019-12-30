@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SMK starter</title>
+  </head>
+  <body>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()">
+      Loading... 
+    </canvas>
+
+    <script>
+      window.Module = {
+        canvas: document.getElementById('canvas'),
+        print: console.log,
+        printErr: console.error,
+      };
+    </script>
+
+    <script async src="smkstarter.js"></script>
+  </body>
+</html>
