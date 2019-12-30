@@ -31,3 +31,5 @@ if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
     COPYONLY
   )
 endif()
+
+install(TARGETS pigami RUNTIME DESTINATION "bin")
