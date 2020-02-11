@@ -1,37 +1,11 @@
-Minimal starter project using the
-[SMK library](https://github.com/ArthurSonzogni/smk)
+LightFlowEditor
+---------------
 
-- [Build instructions:](#build-instructions-)
-  * [Desktop build:](#desktop-build-)
-  * [Webassembly build:](#webassembly-build-)
-  * [Linux snap build:](#linux-snap-build-)
-- [Want more complexe examples?](#want-more-complexe-examples-)
+(Work in progress)
 
-# Build instructions:
+A raytracer of implicit geometry bundled with a node based editor.
 
-## Desktop build:
-~~~bash
-mkdir build
-cd build
-cmake ..
-make -j3
-./main
-~~~
-
-## Webassembly build:
-~~~bash
-mkdir build_emscripten
-cd build_emscripten
-emcmake cmake ..
-make -j3
-python -m SimpleHTTPServer
-(visit localhost:8000)
-~~~
-
-## Linux snap build:
-Nothing to do. Upload your game to github and visit https://snapcraft.io/build.
-
-# Want more complexe examples?
+Using the [SMK library](https://github.com/ArthurSonzogni/smk)
 
 Look at real projects:
 * [IceMaze](https://github.com/ArthurSonzogni/IceMaze)
