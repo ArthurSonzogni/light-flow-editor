@@ -16,8 +16,6 @@ add_executable(lightfloweditor
   src/editor/Connector.hpp
   src/editor/Node.cpp
   src/editor/Node.hpp
-  src/editor/Shape.cpp
-  src/editor/Shape.hpp
   src/editor/Slot.cpp
   src/editor/Slot.hpp
   src/editor/Resource.cpp

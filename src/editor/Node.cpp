@@ -16,11 +16,11 @@ float title_height = 32;
 float padding = 3;
 
 Node::Node() {
-  base_ = RoundedRectangle(width, height, 10);
+  base_ = smk::Shape::RoundedRectangle(width, height, 10);
   base_.SetColor({0.5, 0.5, 0.5, 0.5});
   base_.SetCenter(-width * 0.5, -height * 0.5);
 
-  title_base_ = RoundedRectangle(width, title_height, 10);
+  title_base_ = smk::Shape::RoundedRectangle(width, title_height, 10);
   title_base_.SetColor({0.5, 0.5, 0.5, 0.5});
   title_base_.SetCenter(-width * 0.5, -title_height * 0.5);
 

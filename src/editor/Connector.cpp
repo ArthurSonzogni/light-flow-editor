@@ -1,6 +1,6 @@
 #include "editor/Connector.hpp"
 #include <smk/Color.hpp>
-#include "editor/Shape.hpp"
+#include <smk/Shape.hpp>
 #include "editor/Slot.hpp"
 
 namespace editor {
@@ -36,7 +36,7 @@ void Connector::Draw(smk::RenderTarget* target) {
   float d = glm::distance(A_->GetPosition(), B_->GetPosition());
   glm::vec2 strength(d * 0.4, 0);
 
-  auto bezier = Bezier(
+  auto bezier = smk::Shape::Bezier(
       {
           A_->GetPosition(),
           A_->GetPosition() + (A_->IsRight() ? +strength : -strength),
@@ -46,12 +46,12 @@ void Connector::Draw(smk::RenderTarget* target) {
       20);
 
   {
-    auto path = Path(bezier, 16);
+    auto path = smk::Shape::Path(bezier, 16);
     path.SetColor({0.0, 0.0, 0.0, 0.3});
     target->Draw(path);
   }
   {
-    auto path = Path(bezier, 10);
+    auto path = smk::Shape::Path(bezier, 10);
     path.SetColor(A_->GetColor());
     target->Draw(path);
   }
