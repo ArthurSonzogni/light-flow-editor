@@ -2,6 +2,7 @@
 #define EDITOR_CONNECTOR_HPP
 
 #include <smk/RenderTarget.hpp>
+#include <smk/Transformable.hpp>
 
 namespace editor {
 
@@ -19,6 +20,11 @@ class Connector {
  private:
   Slot* A_ = nullptr;
   Slot* B_ = nullptr;
+
+  smk::Transformable background_;
+  smk::Transformable foreground_;
+  glm::vec2 position_a_ = glm::vec2(0.f, 0.f);
+  glm::vec2 position_b_ = glm::vec2(0.f, 0.f);
 };
 
 }  // namespace editor

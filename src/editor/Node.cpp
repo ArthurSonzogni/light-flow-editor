@@ -4,7 +4,6 @@
 #include <smk/Shape.hpp>
 #include "editor/Board.hpp"
 #include "editor/Resource.hpp"
-#include "editor/Shape.hpp"
 #include "editor/Slot.hpp"
 
 namespace editor {
@@ -28,20 +27,14 @@ Node::Node() {
   title_ = smk::Text(font, "Translate");
   title_.SetColor(smk::Color::Black);
 
-  static int i = 0;
-  glm::vec4 color[] = {
-      {0.5, 0.5, 1.0, 1.0},
-      {1.0, 0.5, 0.5, 1.0},
-      smk::Color::Yellow,
-      smk::Color::Green,
-  };
-
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(0, 50), false, color[i++%3]));
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(width, 50), true, color[i++%3]));
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(0, 82), false, color[i++%3]));
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(width, 82), true, color[i++%3]));
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(0, 112), false, color[i++%3]));
-  slots_.push_back(std::make_unique<Slot>(this, glm::vec2(width, 112), true, color[i++%3]));
+  for(int i = 1; i<4; ++i) {
+  //for (const blueprint::Slot& slot : blueprint.input) {
+    slots_.push_back(std::make_unique<Slot>(this, glm::vec2(0, 50 * i), false, smk::Color::Cyan));
+  }
+  for(int i = 1; i<4; ++i) {
+  //for (const blueprint::Slot& slot : blueprint.input) {
+    slots_.push_back(std::make_unique<Slot>(this, glm::vec2(width, 50 * i), true, smk::Color::Cyan));
+  }
 }
 
 Node::~Node() = default;

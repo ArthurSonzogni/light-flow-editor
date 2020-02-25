@@ -4,24 +4,23 @@
 #include "editor/Node.hpp"
 #include "editor/Connector.hpp"
 #include "editor/Slot.hpp"
-#include "editor/Shape.hpp"
+#include <smk/Shape.hpp>
 
 namespace editor {
 
-Board::Board() {
-  nodes_.push_back(std::make_unique<Node>());
-  nodes_.back()->SetPosition({200,10});
+Board::Board(const blueprint::Board& blueprint) {
+  int x = 0;
+  int y = 0;
 
-  nodes_.push_back(std::make_unique<Node>());
-  nodes_.back()->SetPosition({200,200});
+  for(const blueprint::Node& node : blueprint.nodes) {
+    (void)node;
+    nodes_.push_back(std::make_unique<Node>());
+    nodes_.back()->SetPosition({200 * x, 200 * y});
 
-  nodes_.push_back(std::make_unique<Node>());
-  nodes_.back()->SetPosition({200,400});
-
-  nodes_.push_back(std::make_unique<Node>());
-  nodes_.back()->SetPosition({400,400});
-
-  fake_node_ = std::make_unique<Node>();
+    ++x;
+    y += x / 4;
+    x %= 4;
+  }
 }
 
 Board::~Board() = default;
@@ -31,36 +30,54 @@ void Board::Step(smk::RenderTarget* target, smk::Input* input) {
   auto cursor = input->cursor() + view_shiffting_;
 
   if (input->IsCursorPressed()) {
+    // Set cursor.
     start_slot_ = FindSlot(cursor);
-    if (start_slot_)
+    if (start_slot_) {
+      connector_in_ = start_slot_->GetPosition();
+      connector_in_pushed_ = start_slot_->GetPosition();
+      connector_out_pushed_ = start_slot_->GetPosition();
+      connector_out_ = start_slot_->GetPosition();
       return;
+    }
 
-    // Reorder moved node.
+    // Move node.
     for (auto& node : nodes_) {
       if (node->OnCursorPressed(cursor)) {
         selected_node_ = node.get();
+        // Reorder moved node.
         std::swap(node, nodes_.back());
         return;
       }
     }
 
+    // Translation.
     grab_point_ = view_shiffting_ + input->cursor();
   }
 
   if (input->IsCursorHold()) {
     if (start_slot_) {
-      fake_slot_ = std::make_unique<Slot>(fake_node_.get(), cursor,
-                                          !start_slot_->IsRight(),
-                                          start_slot_->GetColor());
-      if (Slot* end_slot = FindSlot(cursor)) {
-        if (end_slot->GetColor() == start_slot_->GetColor()) {
-        fake_slot_ = std::make_unique<Slot>(
-            fake_node_.get(), end_slot->GetPosition(), end_slot->IsRight(),
-            start_slot_->GetColor());
-        }
+      glm::vec2 connector_out = cursor;
+
+      float d = glm::distance(connector_in_, connector_out);
+      glm::vec2 strength(d * 0.4, 0);
+
+      glm::vec2 connector_in_pushed =
+          connector_in_ + (start_slot_->IsRight() ? +strength : -strength);
+      glm::vec2 connector_out_pushed = connector_out;
+
+      Slot* end_slot = FindSlot(cursor);
+      if (end_slot && end_slot->GetColor() == start_slot_->GetColor()) {
+        connector_out = end_slot->GetPosition();
+        connector_out_pushed =
+            connector_out_ + (end_slot->IsRight() ? +strength : -strength);
+        connector_out_ += (connector_out - connector_out_) * 0.3f;
       }
-      fake_connector_ =
-          std::make_unique<Connector>(start_slot_, fake_slot_.get());
+      connector_out_ = connector_out;
+      connector_out_pushed_ +=
+          (connector_out_pushed - connector_out_pushed_) * 0.3f;
+      connector_in_pushed_ +=
+          (connector_in_pushed - connector_in_pushed_) * 0.3f;
+
       return;
     }
 
@@ -82,8 +99,6 @@ void Board::Step(smk::RenderTarget* target, smk::Input* input) {
         }
       }
       start_slot_ = nullptr;
-      fake_connector_.reset();
-      fake_slot_.reset();
     }
     selected_node_ = nullptr;
     return;
@@ -102,8 +117,24 @@ void Board::Draw(smk::RenderTarget* target) {
   for (const auto& connector : connectors_)
     connector->Draw(target);
 
-  if (fake_connector_)
-    fake_connector_->Draw(target);
+  if (start_slot_) {
+    auto bezier = smk::Shape::Bezier(
+        {
+            connector_in_,
+            connector_in_pushed_,
+            connector_out_pushed_,
+            connector_out_,
+        },
+        16);
+
+    auto background_ = smk::Shape::Path(bezier, 16);
+    auto foreground_ = smk::Shape::Path(bezier, 10);
+
+    background_.SetColor({0.0, 0.0, 0.0, 0.3});
+    foreground_.SetColor(start_slot_->GetColor());
+    target->Draw(background_);
+    target->Draw(foreground_);
+  }
 }
 
 Slot* Board::FindSlot(const glm::vec2& position) {

@@ -9,7 +9,7 @@ project(lightfloweditor
 
 add_executable(lightfloweditor
   src/main.cpp
-  src/util.hpp
+  src/editor/Blueprint.hpp
   src/editor/Board.cpp
   src/editor/Board.hpp
   src/editor/Connector.cpp

@@ -10,9 +10,13 @@ class Node;
 class Connector;
 class Slot;
 
+namespace blueprint {
+struct Board;
+}
+
 class Board {
  public:
-  Board();
+  Board(const blueprint::Board& blueprint);
   ~Board();
   void Step(smk::RenderTarget* target, smk::Input* input);
   void Draw(smk::RenderTarget* target);
@@ -27,9 +31,10 @@ class Board {
   glm::vec2 view_shiffting_;
   glm::vec2 grab_point_;
 
-  std::unique_ptr<Node> fake_node_;
-  std::unique_ptr<Slot> fake_slot_;
-  std::unique_ptr<Connector> fake_connector_;
+  glm::vec2 connector_in_;
+  glm::vec2 connector_in_pushed_;
+  glm::vec2 connector_out_pushed_;
+  glm::vec2 connector_out_;
 };
 
 }  // namespace editor

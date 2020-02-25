@@ -1,13 +1,14 @@
 #ifndef EDITOR_NODE_HPP
 #define EDITOR_NODE_HPP
 
-#include <memory>
-#include <vector>
-
 #include <glm/glm.hpp>
+#include <memory>
 #include <smk/RenderTarget.hpp>
 #include <smk/Text.hpp>
 #include <smk/Transformable.hpp>
+#include <vector>
+
+#include "editor/Blueprint.hpp"
 
 namespace editor {
 
