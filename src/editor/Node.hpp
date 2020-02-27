@@ -15,9 +15,13 @@ namespace editor {
 class Slot;
 class Board;
 
+namespace blueprint {
+class Node;
+}
+
 class Node {
  public:
-  Node();
+  Node(const blueprint::Node& blueprint);
   ~Node();
   void Draw(smk::RenderTarget*);
 
@@ -36,6 +40,9 @@ class Node {
   smk::Text title_;
   smk::Transformable title_base_;
   smk::Transformable base_;
+
+  float width_;
+  float height_;
 
   glm::vec2 cursor_drag_point;
 };

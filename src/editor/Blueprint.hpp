@@ -17,8 +17,8 @@ struct Slot {
 
 struct Node {
   std::string label;
-  std::vector<Slot> inputs;
-  std::vector<Slot> outputs;
+  std::vector<Slot> input;
+  std::vector<Slot> output;
 };
 
 struct Board {

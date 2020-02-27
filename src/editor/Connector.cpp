@@ -29,37 +29,47 @@ void Connector::Disconnect() {
     B->Disconnect(this);
 }
 
-void Connector::Draw(smk::RenderTarget* target) {
+void Connector::DrawBackground(smk::RenderTarget* target) {
   if (!IsConnected())
     return;
+  RebuildVertex();
+  target->Draw(background_);
+}
 
+void Connector::DrawForeground(smk::RenderTarget* target) {
+  if (!IsConnected())
+    return;
+  RebuildVertex();
+  target->Draw(foreground_);
+}
+
+void Connector::RebuildVertex() {
   glm::vec2 position_a = A_->GetPosition();
   glm::vec2 position_b = B_->GetPosition();
 
-  if (position_a != position_a_ || position_b != position_b_) {
-    position_a_ = position_a;
-    position_b_ = position_b;
+  if (position_a == position_a_ && position_b == position_b_)
+    return;
 
-    float d = glm::distance(position_a, position_b);
-    glm::vec2 strength(d * 0.4, 0);
+  position_a_ = position_a;
+  position_b_ = position_b;
 
-    auto bezier = smk::Shape::Bezier(
-        {
-            position_a,
-            position_a + (A_->IsRight() ? +strength : -strength),
-            position_b + (B_->IsRight() ? +strength : -strength),
-            position_b,
-        },
-        16);
+  float d = glm::distance(position_a, position_b);
+  glm::vec2 strength(d * 0.4, 0);
 
-    background_ = smk::Shape::Path(bezier, 16);
-    foreground_ = smk::Shape::Path(bezier, 10);
+  auto bezier = smk::Shape::Bezier(
+      {
+          position_a,
+          position_a + (A_->IsRight() ? +strength : -strength),
+          position_b + (B_->IsRight() ? +strength : -strength),
+          position_b,
+      },
+      16);
 
-    background_.SetColor({0.0, 0.0, 0.0, 0.3});
-    foreground_.SetColor(A_->GetColor());
-  }
-  target->Draw(background_);
-  target->Draw(foreground_);
+  background_ = smk::Shape::Path(bezier, 16);
+  foreground_ = smk::Shape::Path(bezier, 10);
+
+  background_.SetColor({0.0, 0.0, 0.0, 0.3});
+  foreground_.SetColor(A_->GetColor());
 }
 
 }  // namespace editor

@@ -12,9 +12,8 @@ Board::Board(const blueprint::Board& blueprint) {
   int x = 0;
   int y = 0;
 
-  for(const blueprint::Node& node : blueprint.nodes) {
-    (void)node;
-    nodes_.push_back(std::make_unique<Node>());
+  for (const blueprint::Node& node : blueprint.nodes) {
+    nodes_.push_back(std::make_unique<Node>(node));
     nodes_.back()->SetPosition({200 * x, 200 * y});
 
     ++x;
@@ -115,7 +114,9 @@ void Board::Draw(smk::RenderTarget* target) {
     node->Draw(target);
 
   for (const auto& connector : connectors_)
-    connector->Draw(target);
+    connector->DrawBackground(target);
+  for (const auto& connector : connectors_)
+    connector->DrawForeground(target);
 
   if (start_slot_) {
     auto bezier = smk::Shape::Bezier(

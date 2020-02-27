@@ -11,30 +11,74 @@ namespace editor {
 smk::Font font;
 float width = 150;
 float height = 150;
-float title_height = 32;
-float padding = 3;
+float title_height = 48;
+float padding = 10;
 
-Node::Node() {
-  base_ = smk::Shape::RoundedRectangle(width, height, 10);
-  base_.SetColor({0.5, 0.5, 0.5, 0.5});
-  base_.SetCenter(-width * 0.5, -height * 0.5);
-
-  title_base_ = smk::Shape::RoundedRectangle(width, title_height, 10);
-  title_base_.SetColor({0.5, 0.5, 0.5, 0.5});
-  title_base_.SetCenter(-width * 0.5, -title_height * 0.5);
+Node::Node(const blueprint::Node& blueprint) {
+  width_ = 0.f;//32.f;
+  height_ = 0.f;//32.f;
 
   font = smk::Font(ResourcePath() + "/arial.ttf", 20);
-  title_ = smk::Text(font, "Translate");
+  title_ = smk::Text(font, blueprint.label);
   title_.SetColor(smk::Color::Black);
 
-  for(int i = 1; i<4; ++i) {
-  //for (const blueprint::Slot& slot : blueprint.input) {
-    slots_.push_back(std::make_unique<Slot>(this, glm::vec2(0, 50 * i), false, smk::Color::Cyan));
+  auto title_dimension = title_.ComputeDimensions();
+  width_ = title_dimension.x + 2 * padding;
+  height_= title_dimension.y + 2 * padding;
+
+  float input_width = 0.f;
+  for (const blueprint::Slot& slot : blueprint.input) {
+    auto label = smk::Text(font, slot.label);
+    input_width = std::max(input_width, label.ComputeDimensions().x);
   }
-  for(int i = 1; i<4; ++i) {
-  //for (const blueprint::Slot& slot : blueprint.input) {
-    slots_.push_back(std::make_unique<Slot>(this, glm::vec2(width, 50 * i), true, smk::Color::Cyan));
+
+  float output_width = 0.f;
+  for (const blueprint::Slot& slot : blueprint.output) {
+    auto label = smk::Text(font, slot.label);
+    output_width = std::max(output_width, label.ComputeDimensions().x);
   }
+
+  float input_output_y_start = title_height + padding;
+  {
+    float x = 0.f;
+    float y = input_output_y_start;
+    for (const blueprint::Slot& slot : blueprint.input) {
+      auto label = smk::Text(font, slot.label);
+      auto dimension = label.ComputeDimensions();
+      x = 0.f;
+      y += dimension.y * 0.5f;
+      label.SetCenter(-padding, dimension.y * 0.5f);
+      slots_.push_back(std::make_unique<Slot>(
+          this, glm::vec2(x, y), std::move(label), false, slot.type.color));
+      input_width = std::max(input_width, padding + dimension.x + padding);
+      y += dimension.y * 0.5f + padding;
+    }
+    height_ = std::max(height_, y);
+  }
+
+  width_ = std::max(width_, input_width + padding + output_width);
+  {
+    float x = width_;
+    float y = input_output_y_start;
+    for (const blueprint::Slot& slot : blueprint.output) {
+      auto label = smk::Text(font, slot.label);
+      auto dimension = label.ComputeDimensions();
+      y += dimension.y * 0.5f;
+      label.SetCenter(padding + dimension.x, dimension.y * 0.5f);
+      slots_.push_back(std::make_unique<Slot>(
+          this, glm::vec2(x, y), std::move(label), true, slot.type.color));
+      y += dimension.y * 0.5f + padding;
+    }
+    height_ = std::max(height_, y);
+  }
+
+  base_ = smk::Shape::RoundedRectangle(width_, height_, 10);
+  base_.SetColor({0.5, 0.5, 0.5, 0.5});
+  base_.SetCenter(-width_ * 0.5, -height_ * 0.5);
+
+  title_base_ = smk::Shape::RoundedRectangle(width_, title_height, 10);
+  title_base_.SetColor({0.5, 0.5, 0.5, 0.5});
+  title_base_.SetCenter(-width_ * 0.5, -title_height * 0.5);
 }
 
 Node::~Node() = default;
@@ -52,8 +96,8 @@ void Node::Draw(smk::RenderTarget* target) {
 }
 
 bool Node::OnCursorPressed(glm::vec2 cursor) {
-  bool hover = cursor.x > position_.x && cursor.x < position_.x + width &&
-               cursor.y > position_.y && cursor.y < position_.y + height;
+  bool hover = cursor.x > position_.x && cursor.x < position_.x + width_ &&
+               cursor.y > position_.y && cursor.y < position_.y + height_;
 
   if (!hover)
     return false;

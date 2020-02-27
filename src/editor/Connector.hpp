@@ -15,9 +15,12 @@ class Connector {
   bool IsConnected();
 
   void Disconnect();
-  void Draw(smk::RenderTarget* target);
+  void DrawForeground(smk::RenderTarget* target);
+  void DrawBackground(smk::RenderTarget* target);
 
  private:
+  void RebuildVertex();
+
   Slot* A_ = nullptr;
   Slot* B_ = nullptr;
 
