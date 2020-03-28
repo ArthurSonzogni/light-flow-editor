@@ -9,21 +9,10 @@ project(lightfloweditor
 
 add_executable(lightfloweditor
   src/main.cpp
-  src/editor/Blueprint.hpp
-  src/editor/Board.cpp
-  src/editor/Board.hpp
-  src/editor/Connector.cpp
-  src/editor/Connector.hpp
-  src/editor/Node.cpp
-  src/editor/Node.hpp
-  src/editor/Slot.cpp
-  src/editor/Slot.hpp
-  src/editor/Resource.cpp
-  src/editor/Resource.hpp
 )
 
 target_include_directories(lightfloweditor PRIVATE src)
-target_link_libraries(lightfloweditor PRIVATE smk)
+target_link_libraries(lightfloweditor PRIVATE smkflow::smkflow)
 
 set_target_properties(lightfloweditor PROPERTIES CXX_STANDARD 17)
 
