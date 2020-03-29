@@ -5,9 +5,6 @@
 #include <smk/Framebuffer.hpp>
 #include <smk/Sprite.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "./util.hpp"  // ExecuteMainLoop
-
-#include "editor/Board.hpp"
 
 int main() {
   // Open a new window.
@@ -54,7 +51,7 @@ int main() {
       return abs(distance + width) - width;
     }
 
-    Value cube(vec3 size, vec3 pos) {
+    Value Cube(vec3 size, vec3 pos) {
       vec3 q = abs(pos) - size;
       vec3 clamped = clamp(pos, - size * 0.5, size * 0.5);
       Value value;
@@ -121,7 +118,8 @@ int main() {
       return value;
     }
 
-    Value sdf(vec3 position) {
+    /*
+    Value other_sdf(vec3 position) {
 
       float sphere_size = 2.0 + 2.0 * sin(time * 0.01f);
 
@@ -130,8 +128,8 @@ int main() {
       vec3 sphere_position = (sphere_rotation * vec4(move(vec3(0.f, -1.f, 3.f), position), 1.f)).xyz;
       vec3 cube_position = (square_rotation * vec4(static_position, 1.f)).xyz;
 
-      Value cube_wall = cube(vec3(0.8), repeat(cube_position, vec3(2.6f, 2.6f, 100.f)));
-      Value cube_wall2 = cube(vec3(0.8), repeat(cube_position, vec3(2.6f, 100.f, 2.6f)));
+      Value cube_wall = Cube(vec3(0.8), repeat(cube_position, vec3(2.6f, 2.6f, 100.f)));
+      Value cube_wall2 = Cube(vec3(0.8), repeat(cube_position, vec3(2.6f, 100.f, 2.6f)));
       cube_wall = Union(cube_wall, cube_wall2);
 
       const float sin_size = 15.f;
@@ -139,7 +137,7 @@ int main() {
       cube_wall.distance += s.x * s.y * s.z * 0.05f;
 
       Value my_sphere = sphere(3.2, cube_position);
-      //Value cube_wall = cube(vec3(0.8), repeat(cube_position, vec3(3.f, 100.f, 3.f)));
+      //Value cube_wall = Cube(vec3(0.8), repeat(cube_position, vec3(3.f, 100.f, 3.f)));
 
       my_sphere.distance = oignon(1.2f, my_sphere.distance);
       my_sphere.distance = oignon(0.5f, my_sphere.distance);
@@ -159,6 +157,17 @@ int main() {
 
       value.distance;
       return value;
+    }
+    */
+
+    Value sdf(vec3 position) {
+      vec3 p = move(vec3(0.0, 0.0, 10.0), position);
+      vec3 b = (sphere_rotation * vec4(p, 1.f)).xyz;
+      float d = 1.f;
+      vec3 e = b / d;
+      Value c = Cube(vec3(1.f,1.f,1.f),e);
+      c.distance  *= d;
+      return c;
     }
 
     vec3 differential(vec3 position) {
@@ -253,8 +262,7 @@ int main() {
   square.SetPosition(-0.5f, -0.5f);
   square.SetScale(1.0f, 1.f);
 
-  editor::Board board;
-  ExecuteMainLoop(window, [&] {
+  window.ExecuteMainLoop([&] {
     float time = window.time();
     framebuffer.Clear({0.2,0.2,0.2,1.0});
     //if (true)
@@ -279,12 +287,10 @@ int main() {
     window.PoolEvents();
     {
       window.shader_program_2d()->Use();
-      //auto square = smk::Sprite(framebuffer);
-      //square.SetScale(std::min(window.width(), window.height()) / float(size));
-      //window.Draw(square);
+      auto square = smk::Sprite(framebuffer);
+      square.SetScale(std::min(window.width(), window.height()) / float(size));
+      window.Draw(square);
 
-      board.Step(&window, &window.input());
-      board.Draw(&window);
     }
     window.Display();
   });

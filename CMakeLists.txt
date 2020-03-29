@@ -9,14 +9,16 @@ project(lightfloweditor
 
 add_executable(lightfloweditor
   src/main.cpp
+  #src/main_sphere_tracing.cpp
 )
 
 target_include_directories(lightfloweditor PRIVATE src)
 target_link_libraries(lightfloweditor PRIVATE smkflow::smkflow)
+target_link_libraries(lightfloweditor PRIVATE fmt::fmt)
 
 set_target_properties(lightfloweditor PROPERTIES CXX_STANDARD 17)
 
-target_compile_options(lightfloweditor PRIVATE -Wall -Wextra -pedantic -Werror)
+#target_compile_options(lightfloweditor PRIVATE -Wall -Wextra -pedantic -Werror)
 
 # Detect emscripten is used.
 if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$") 
