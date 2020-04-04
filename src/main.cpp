@@ -29,7 +29,7 @@ class RenderWidget : public smkflow::Widget {
   }
 
   RenderWidget(smkflow::Node* node)
-      : smkflow::Widget(node), framebuffer_(256.f, 256.f) {
+      : smkflow::Widget(node), framebuffer_(size_, size_) {
     square_ = smk::Shape::Square();
     square_.SetPosition(-0.5f, -0.5f);
     square_.SetScale(1.0f, 1.f);
@@ -75,9 +75,13 @@ class RenderWidget : public smkflow::Widget {
     shader_program_.SetUniform(
         "square_rotation",
         glm::rotate(glm::mat4(1.0), g_time * 0.04f, glm::vec3(0.f, 1.f, 0.f)));
-    shader_program_.SetUniform(
-        "sphere_rotation",
-        glm::rotate(glm::mat4(1.0), -g_time * 0.4f, glm::vec3(0.f, 1.f, 0.f)));
+
+    glm::mat4 sphere_rotation = glm::mat4(1.f);
+    sphere_rotation = glm::rotate(sphere_rotation, -g_time * 0.4f, glm::vec3(0.f, 1.f, 0.f));
+    sphere_rotation = glm::translate(sphere_rotation, glm::vec3(0.f, +3.f, -3.f));
+    sphere_rotation =
+        glm::rotate(sphere_rotation, float(M_PI / 4.f), glm::vec3(1.f, 0.f, 0.f));
+    shader_program_.SetUniform("sphere_rotation", sphere_rotation);
     framebuffer_.Draw(square_);
 
     sprite_.SetPosition(Position());
@@ -89,6 +93,7 @@ class RenderWidget : public smkflow::Widget {
       return;
     if (new_code == code_)
       return;
+    std::cerr << new_code << std::endl;
     code_ = std::move(new_code);
 
     fragment_shader_ = smk::Shader::FromString(code_, GL_FRAGMENT_SHADER);
@@ -99,9 +104,11 @@ class RenderWidget : public smkflow::Widget {
     shader_program_.Link();
 
     sprite_ = smk::Sprite(framebuffer_);
+    sprite_.SetScale(256.f / size_, 256.f / size_);
   }
 
   private:
+    float size_ = 256;
     std::string code_;
 
     smk::Framebuffer framebuffer_;
@@ -124,9 +131,12 @@ enum Node {
   NewVec3,
 
   Union,
+  SmoothedUnion,
   Intersection,
   Complement,
   Difference,
+
+  Repeat,
 
   Sphere,
   Torus,
@@ -140,10 +150,10 @@ auto type_float = glm::vec4{0.7f, 0.7f, 1.f, 1.f};
 auto type_vec3 = glm::vec4{0.7f, 1.f, 1.f, 1.f};
 auto type_sdf = glm::vec4{1.0f, 0.7f, 0.7f, 1.f};
 
-auto node_type_fusion = glm::vec4{1.0, 0.8, 0.8, 1.0f};
-auto node_type_screen = glm::vec4{1.0, 1.0, 1.0, 1.0f};
-auto node_type_primitive = glm::vec4{0.8, 1.0, 0.8, 1.0f};
-auto node_type_transformation = glm::vec4{0.8, 0.8, 1.0, 1.0f};
+auto node_type_fusion = glm::vec4{0.5, 0.4, 0.4, 1.0f};
+auto node_type_screen = glm::vec4{0.5, 0.5, 0.5, 1.0f};
+auto node_type_primitive = glm::vec4{0.4, 0.5, 0.4, 1.0f};
+auto node_type_transformation = glm::vec4{0.4, 0.4, 0.5, 1.0f};
 
 auto node_screen = smkflow::model::Node{
     Node::Screen,
@@ -164,7 +174,7 @@ auto node_number = smkflow::model::Node{
     node_type_primitive,
     {},
     {
-        smkflow::InputBox::Create(0.f),
+        smkflow::Slider::Create(-10.f, 10.f, 0.f, "{:.2f}"),
     },
     {
         {"out", type_float},
@@ -227,9 +237,9 @@ auto node_new_vec3 = smkflow::model::Node{
       {"z", type_float},
     },
     {
-        smkflow::InputBox::Create(0.f),
-        smkflow::InputBox::Create(0.f),
-        smkflow::InputBox::Create(0.f),
+        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
+        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
+        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
     },
     {
         {"out", type_vec3},
@@ -278,6 +288,22 @@ auto node_union = smkflow::model::Node{
     },
 };
 
+auto node_smoothed_union = smkflow::model::Node{
+    Node::SmoothedUnion,
+    "Smooth Union",
+    node_type_fusion,
+    {
+        {"a", type_sdf},
+        {"b", type_sdf},
+    },
+    {
+      smkflow::Slider::Create(0.f, 1.f, 0.5f, "Smooth = {:.2f}"),
+    },
+    {
+        {"a+b", type_sdf},
+    },
+};
+
 auto node_intersection = smkflow::model::Node{
     Node::Intersection,
     "Intersection",
@@ -319,18 +345,34 @@ auto node_complement = smkflow::model::Node{
     },
 };
 
+auto node_repeat= smkflow::model::Node{
+    Node::Repeat,
+    "Repeat",
+    node_type_transformation,
+    {
+        {"a", type_sdf},
+        {"space", type_vec3},
+    },
+    {},
+    {
+        {"out", type_sdf},
+    },
+};
+
 auto my_board = smkflow::model::Board{
     {
         node_screen,
         node_number,
-        node_time,
+        //node_time,
         node_new_vec3,
         node_union,
+        node_smoothed_union,
         node_intersection,
         node_complement,
         node_difference,
         node_sphere,
-        node_torus,
+        node_repeat,
+        //node_torus,
         node_cube,
         node_translate,
         node_scale,
@@ -408,7 +450,7 @@ std::string BuildCube(smkflow::Node* node, const std::string& in, const std::str
   )");
 
   std::string compute_dimensions = "";
-  std::string dimensions = "vec3(1.f, 1.f, 1.f)";
+  std::string dimensions = "vec3(0.8f, 0.8f, 0.8f)";
   if (smkflow::Node* node_dimension = node->InputAt(0)->OppositeNode()) {
     dimensions = context->Identifier();
     compute_dimensions = BuildVec3(node_dimension, dimensions, context) + "\n";
@@ -453,6 +495,37 @@ std::string BuildUnion(smkflow::Node* node,
   auto inner_b = BuildSDF(input_b, in, out_b, context);
   return fmt::format("{}\n{}\n  Value {} = Union({},{});",  //
                      inner_a, inner_b, out, out_a, out_b);
+}
+
+std::string BuildSmoothedUnion(smkflow::Node* node,
+                               const std::string& in,
+                               const std::string& out,
+                               Context* context) {
+  context->RegisterFunction(R"(
+    Value SmoothedUnion(float k, Value a, Value b) {
+      Value value;
+      float lambda = clamp(0.5 + 0.5 * (b.distance - a.distance) / k, 0.0, 1.0);
+      value.distance = mix(b.distance, a.distance, lambda) - k*lambda*(1.0-lambda);
+      b.color = b.color * b.color;
+      a.color = a.color * a.color;
+      value.color = mix(b.color, a.color, lambda);
+      value.color = sqrt(value.color);
+      return value;
+    }
+  )");
+
+  float smooth = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
+  smkflow::Node* input_a = node->InputAt(0)->OppositeNode();
+  smkflow::Node* input_b = node->InputAt(1)->OppositeNode();
+  auto out_a = context->Identifier();
+  auto out_b = context->Identifier();
+  auto inner_a = BuildSDF(input_a, in, out_a, context);
+  auto inner_b = BuildSDF(input_b, in, out_b, context);
+  return fmt::format(
+      "{}\n"
+      "{}\n"
+      "Value {} = SmoothedUnion({}, {},{});",
+      inner_a, inner_b, out, smooth, out_a, out_b);
 }
 
 std::string BuildIntersection(smkflow::Node* node,
@@ -519,7 +592,10 @@ std::string BuildScale(smkflow::Node* node,
       "  vec3 {} = {} / {};\n"
       "{}\n"
       "  {}.distance *= {};",
-      inner_b, scaled_in, out_b, inner_a, out, out_b);
+      inner_b,
+      scaled_in, in, out_b,
+      inner_a,
+      out, out_b);
 }
 
 std::string BuildTranslate(smkflow::Node* node,
@@ -541,20 +617,37 @@ std::string BuildTranslate(smkflow::Node* node,
       inner_b, in_translated, in, translation, inner_a);
 }
 
+std::string BuildRepeat(smkflow::Node* node,
+                        const std::string& in,
+                        const std::string& out,
+                        Context* context) {
+  context->RegisterFunction(R"(
+    vec3 Repeat(vec3 pos, vec3 size) {
+      return mod(pos+0.5* size, size)-0.5* size;
+    }
+  )");
+
+  smkflow::Node* input_pos = node->InputAt(0)->OppositeNode();
+  smkflow::Node* input_dim = node->InputAt(1)->OppositeNode();
+
+  auto out_dimension = context->Identifier();
+  auto repeated_in = context->Identifier();
+
+  auto inner_dimension = BuildVec3(input_dim, out_dimension, context);
+  auto inner_sdf = BuildSDF(input_pos, repeated_in, out, context);
+  return fmt::format(
+      "{}\n"
+      "  vec3 {} = Repeat({}, {});\n"
+      "{}\n",
+      inner_dimension, repeated_in, in, out_dimension, inner_sdf);
+}
+
 std::string BuildNewVec3(smkflow::Node* node,
                          const std::string& out,
                          Context* context) {
-  std::stringstream ss;
-  ss << smkflow::InputBox::From(node->WidgetAt(0))->GetValue();
-  ss << "\n";
-  ss << smkflow::InputBox::From(node->WidgetAt(1))->GetValue();
-  ss << "\n";
-  ss << smkflow::InputBox::From(node->WidgetAt(2))->GetValue();
-  ss << "\n";
-  float DX = 0.f;
-  float DY = 0.f;
-  float DZ = 0.F;
-  ss >> DX >> DY >> DZ;
+  float DX = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
+  float DY = smkflow::Slider::From(node->WidgetAt(1))->GetValue();
+  float DZ = smkflow::Slider::From(node->WidgetAt(2))->GetValue();
 
   return fmt::format("  vec3 {} = vec3({},{},{});", out, DX, DY, DZ);
 }
@@ -657,7 +750,7 @@ std::string BuildScreen(smkflow::Node* node, Context* context) {
   return fmt::format(
       "{0}\n"
       "Value sdf(vec3 {1}) {{\n"
-      "  vec3 {3} = (sphere_rotation * vec4({2} - vec3(0,0,3), 1.0)).xyz;\n"
+      "  vec3 {3} = (sphere_rotation * vec4({2}, 1.0)).xyz;\n"
       "{4}\n"
       "  return {5};\n"
       "}}"
@@ -667,8 +760,8 @@ std::string BuildScreen(smkflow::Node* node, Context* context) {
 std::string BuildNumber(smkflow::Node* node,
                         const std::string& out,
                         Context* context) {
-  std::string value = smkflow::InputBox::From(node->WidgetAt(0))->GetValue();
-  return "  float " + out + " = " + value + ";\n";
+  float value = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
+  return "  float " + out + " = " + std::to_string(value) + ";\n";
 }
 
 std::string BuildSDF(smkflow::Node* node,
@@ -684,6 +777,8 @@ std::string BuildSDF(smkflow::Node* node,
       return BuildSphere(node, in, out, context);
     case Node::Union:
       return BuildUnion(node, in, out, context);
+    case Node::SmoothedUnion:
+      return BuildSmoothedUnion(node, in, out, context);
     case Node::Intersection:
       return BuildIntersection(node, in, out, context);
     case Node::Difference:
@@ -692,6 +787,8 @@ std::string BuildSDF(smkflow::Node* node,
       return BuildScale(node, in, out, context);
     case Node::Translate:
       return BuildTranslate(node, in, out, context);
+    case Node::Repeat:
+      return BuildRepeat(node, in, out, context);
     default:
       return BuildUnimplemented(node, context);
   }
@@ -750,7 +847,7 @@ int main() {
   // Instanciate some Node based on the model.
   int x = -my_board.nodes.size() / 2;
   for (const auto& node_model : my_board.nodes) {
-    for (int y = -3; y <= 3; ++y) {
+    for (int y = -2; y <= 2; ++y) {
       smkflow::Node* node = board->Create(node_model);
       node->SetPosition({200 * x, 200 * y});
     }

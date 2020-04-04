@@ -4,7 +4,7 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED false)
 FetchContent_Declare(smkflow
   #GIT_REPOSITORY https://github.com/ArthurSonzogni/smkflow
   GIT_REPOSITORY git@github.com:ArthurSonzogni/smkflow
-  GIT_TAG 92c05cd37555e12543387a5b1545e4901a9d3772
+  GIT_TAG 1af6e4feea17f22e86be3877579c67856029490c
 )
 
 FetchContent_GetProperties(smkflow)
