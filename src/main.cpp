@@ -11,7 +11,13 @@
 #include <smk/Window.hpp>
 #include <smkflow/Elements.hpp>
 #include <smkflow/Model.hpp>
-#include <smkflow/Widget.hpp>
+#include <smkflow/widget/Widget.hpp>
+#include <smkflow/widget/Slider.hpp>
+#include <smkflow/widget/Label.hpp>
+#include <smkflow/widget/Input.hpp>
+#include <smkflow/widget/Box.hpp>
+#include <smkflow/widget/Menu.hpp>
+#include <smkflow/Constants.hpp>
 #include <sstream>
 
 float g_time;
@@ -19,8 +25,8 @@ float g_time;
 class RenderWidget : public smkflow::Widget {
  public:
   static smkflow::WidgetFactory Create() {
-    return [](smkflow::Node* node) {
-      return std::make_unique<RenderWidget>(node);
+    return [](smkflow::Widget::Delegate* delegate) {
+      return std::make_unique<RenderWidget>(delegate);
     };
   }
 
@@ -28,8 +34,8 @@ class RenderWidget : public smkflow::Widget {
     return dynamic_cast<RenderWidget*>(node);
   }
 
-  RenderWidget(smkflow::Node* node)
-      : smkflow::Widget(node), framebuffer_(size_, size_) {
+  RenderWidget(smkflow::Widget::Delegate* delegate)
+      : smkflow::Widget(delegate), framebuffer_(size_, size_) {
     square_ = smk::Shape::Square();
     square_.SetPosition(-0.5f, -0.5f);
     square_.SetScale(1.0f, 1.f);
@@ -57,9 +63,6 @@ class RenderWidget : public smkflow::Widget {
   }
 
   glm::vec2 ComputeDimensions() override { return {256.f, 256.f}; }
-
-  void Step(smk::Input*, const glm::vec2& /* cursor */) override  {
-  }
 
   void Draw(smk::RenderTarget* target) override {
     framebuffer_.Clear({0.2, 0.2, 0.2, 1.0});
@@ -93,7 +96,6 @@ class RenderWidget : public smkflow::Widget {
       return;
     if (new_code == code_)
       return;
-    std::cerr << new_code << std::endl;
     code_ = std::move(new_code);
 
     fragment_shader_ = smk::Shader::FromString(code_, GL_FRAGMENT_SHADER);
@@ -162,10 +164,8 @@ auto node_screen = smkflow::model::Node{
     {
         {"in", type_sdf},
     },
-    {
-        RenderWidget::Create(),
-    },
     {},
+    RenderWidget::Create(),
 };
 
 auto node_number = smkflow::model::Node{
@@ -174,18 +174,15 @@ auto node_number = smkflow::model::Node{
     node_type_primitive,
     {},
     {
-        smkflow::Slider::Create(-10.f, 10.f, 0.f, "{:.2f}"),
-    },
-    {
         {"out", type_float},
     },
+    smkflow::Slider(-10.f, 10.f, 0.f, "{:.2f}"),
 };
 
 auto node_time = smkflow::model::Node{
     Node::Time,
     "time",
     node_type_primitive,
-    {},
     {},
     {
         {"out", type_float},
@@ -199,7 +196,6 @@ auto node_cube = smkflow::model::Node{
     {
         {"dim", type_vec3},
     },
-    {},
     {
         {"out", type_sdf},
     },
@@ -209,7 +205,6 @@ auto node_sphere = smkflow::model::Node{
     Node::Sphere,
     "Sphere",
     node_type_primitive,
-    {},
     {},
     {
         {"out", type_sdf},
@@ -221,7 +216,6 @@ auto node_torus = smkflow::model::Node{
     "Torus",
     node_type_primitive,
     {},
-    {},
     {
         {"out", type_sdf},
     },
@@ -232,18 +226,18 @@ auto node_new_vec3 = smkflow::model::Node{
     "vec3",
     node_type_fusion,
     {
-      {"x", type_float},
-      {"y", type_float},
-      {"z", type_float},
-    },
-    {
-        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
-        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
-        smkflow::Slider::Create(-5.f, 5.f, 0.f, "{:.2f}"),
+        {"x", type_float},
+        {"y", type_float},
+        {"z", type_float},
     },
     {
         {"out", type_vec3},
     },
+    smkflow::VBox({
+        smkflow::Slider(-5.f, 5.f, 0.f, "{:.2f}"),
+        smkflow::Slider(-5.f, 5.f, 0.f, "{:.2f}"),
+        smkflow::Slider(-5.f, 5.f, 0.f, "{:.2f}"),
+    }),
 };
 
 auto node_translate = smkflow::model::Node{
@@ -254,7 +248,6 @@ auto node_translate = smkflow::model::Node{
         {"in", type_sdf},
         {"translate", type_vec3},
     },
-    {},
     {
         {"out", type_sdf},
     },
@@ -268,7 +261,6 @@ auto node_scale = smkflow::model::Node{
         {"in", type_sdf},
         {"factor", type_float},
     },
-    {},
     {
         {"out", type_sdf},
     },
@@ -282,7 +274,6 @@ auto node_union = smkflow::model::Node{
         {"a", type_sdf},
         {"b", type_sdf},
     },
-    {},
     {
         {"a+b", type_sdf},
     },
@@ -297,11 +288,9 @@ auto node_smoothed_union = smkflow::model::Node{
         {"b", type_sdf},
     },
     {
-      smkflow::Slider::Create(0.f, 1.f, 0.5f, "Smooth = {:.2f}"),
-    },
-    {
         {"a+b", type_sdf},
     },
+    smkflow::Slider(0.f, 1.f, 0.5f, "Smooth = {:.2f}"),
 };
 
 auto node_intersection = smkflow::model::Node{
@@ -312,7 +301,6 @@ auto node_intersection = smkflow::model::Node{
         {"a", type_sdf},
         {"b", type_sdf},
     },
-    {},
     {
         {"a.b", type_sdf},
     },
@@ -326,7 +314,6 @@ auto node_difference = smkflow::model::Node{
         {"a", type_sdf},
         {"b", type_sdf},
     },
-    {},
     {
         {"a-b", type_sdf},
     },
@@ -339,7 +326,6 @@ auto node_complement = smkflow::model::Node{
     {
         {"a", type_sdf},
     },
-    {},
     {
         {"-a", type_sdf},
     },
@@ -353,7 +339,6 @@ auto node_repeat= smkflow::model::Node{
         {"a", type_sdf},
         {"space", type_vec3},
     },
-    {},
     {
         {"out", type_sdf},
     },
@@ -361,21 +346,23 @@ auto node_repeat= smkflow::model::Node{
 
 auto my_board = smkflow::model::Board{
     {
-        node_screen,
-        node_number,
-        //node_time,
-        node_new_vec3,
-        node_union,
-        node_smoothed_union,
-        node_intersection,
-        node_complement,
-        node_difference,
-        node_sphere,
-        node_repeat,
-        //node_torus,
-        node_cube,
-        node_translate,
-        node_scale,
+        smkflow::MenuEntry("screen", smkflow::CreateNode(node_screen)),
+        smkflow::MenuEntry("number", smkflow::CreateNode(node_number)),
+        smkflow::MenuEntry("time", smkflow::CreateNode(node_time)),
+        smkflow::MenuEntry("new_vec3", smkflow::CreateNode(node_new_vec3)),
+        smkflow::MenuEntry("union", smkflow::CreateNode(node_union)),
+        smkflow::MenuEntry("smoothed_union",
+                           smkflow::CreateNode(node_smoothed_union)),
+        smkflow::MenuEntry("intersection",
+                           smkflow::CreateNode(node_intersection)),
+        smkflow::MenuEntry("complement", smkflow::CreateNode(node_complement)),
+        smkflow::MenuEntry("difference", smkflow::CreateNode(node_difference)),
+        smkflow::MenuEntry("sphere", smkflow::CreateNode(node_sphere)),
+        smkflow::MenuEntry("repeat", smkflow::CreateNode(node_repeat)),
+        smkflow::MenuEntry("torus", smkflow::CreateNode(node_torus)),
+        smkflow::MenuEntry("cube", smkflow::CreateNode(node_cube)),
+        smkflow::MenuEntry("translate", smkflow::CreateNode(node_translate)),
+        smkflow::MenuEntry("scale", smkflow::CreateNode(node_scale)),
     },
     "../resources/arial.ttf",
 };
@@ -514,7 +501,7 @@ std::string BuildSmoothedUnion(smkflow::Node* node,
     }
   )");
 
-  float smooth = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
+  float smooth = smkflow::Slider(node->widget())->GetValue();
   smkflow::Node* input_a = node->InputAt(0)->OppositeNode();
   smkflow::Node* input_b = node->InputAt(1)->OppositeNode();
   auto out_a = context->Identifier();
@@ -645,9 +632,10 @@ std::string BuildRepeat(smkflow::Node* node,
 std::string BuildNewVec3(smkflow::Node* node,
                          const std::string& out,
                          Context* context) {
-  float DX = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
-  float DY = smkflow::Slider::From(node->WidgetAt(1))->GetValue();
-  float DZ = smkflow::Slider::From(node->WidgetAt(2))->GetValue();
+  auto box = smkflow::Box(node->widget());
+  float DX = smkflow::Slider(box->ChildAt(0))->GetValue();
+  float DY = smkflow::Slider(box->ChildAt(1))->GetValue();
+  float DZ = smkflow::Slider(box->ChildAt(2))->GetValue();
 
   return fmt::format("  vec3 {} = vec3({},{},{});", out, DX, DY, DZ);
 }
@@ -760,7 +748,7 @@ std::string BuildScreen(smkflow::Node* node, Context* context) {
 std::string BuildNumber(smkflow::Node* node,
                         const std::string& out,
                         Context* context) {
-  float value = smkflow::Slider::From(node->WidgetAt(0))->GetValue();
+  float value = smkflow::Slider(node->widget())->GetValue();
   return "  float " + out + " = " + std::to_string(value) + ";\n";
 }
 
@@ -833,7 +821,7 @@ std::string Build(smkflow::Board* board) {
     if (!context.IsImplemented())
       continue;
 
-    auto widget = RenderWidget::From(node->WidgetAt(0));
+    auto widget = RenderWidget::From(node->widget());
     widget->Build(header + out + footer);
   }
   return "";
@@ -845,14 +833,14 @@ int main() {
   auto board = smkflow::Board::Create(my_board);
 
   // Instanciate some Node based on the model.
-  int x = -my_board.nodes.size() / 2;
-  for (const auto& node_model : my_board.nodes) {
-    for (int y = -2; y <= 2; ++y) {
-      smkflow::Node* node = board->Create(node_model);
-      node->SetPosition({200 * x, 200 * y});
-    }
-    ++x;
-  }
+  //int x = -my_board.nodes.size() / 2;
+  //for (const auto& node_model : my_board.nodes) {
+    //for (int y = -2; y <= 1; ++y) {
+      //smkflow::Node* node = board->Create(node_model);
+      //node->SetPosition({200 * x, 200 * y});
+    //}
+    //++x;
+  //}
 
   std::string previous_shader_code;
   window.ExecuteMainLoop([&] {
@@ -860,7 +848,7 @@ int main() {
 
     window.shader_program_2d()->Use();
     window.PoolEvents();
-    window.Clear({0.2, 0.2, 0.2, 1.0});
+    window.Clear(smkflow::color::background);
 
     board->Step(&window, &window.input());
     board->Draw(&window);
