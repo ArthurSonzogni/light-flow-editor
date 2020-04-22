@@ -1,3 +1,7 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+
 auto model_smoothed_union = smkflow::model::Node{
     Node::SmoothedUnion,
     "Smooth Union",
@@ -42,4 +46,3 @@ std::string BuildSmoothedUnion(smkflow::Node* node,
       "Value {} = SmoothedUnion({}, {},{});",
       inner_a, inner_b, out, smooth, out_a, out_b);
 }
-

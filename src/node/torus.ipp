@@ -1,3 +1,7 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+
 auto model_torus = smkflow::model::Node{
     Node::Torus,
     "Torus",
@@ -12,9 +16,9 @@ auto model_torus = smkflow::model::Node{
 };
 
 std::string BuildTorus(smkflow::Node* node,
-                      const std::string& in,
-                      const std::string out,
-                      Context* context) {
+                       const std::string& in,
+                       const std::string out,
+                       Context* context) {
   context->RegisterFunction(R"(
     Value Torus(float radius_1, float radius_2, vec3 pos) {
       Value value;
@@ -41,6 +45,6 @@ std::string BuildTorus(smkflow::Node* node,
   }
 
   return fmt::format("{}{}  Value {} = Torus({}, {}, {});",  //
-                     compute_radius_1, compute_radius_2,      //
+                     compute_radius_1, compute_radius_2,     //
                      out, radius_1_var, radius_2_var, in);
 }

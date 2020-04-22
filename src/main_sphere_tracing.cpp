@@ -1,10 +1,14 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+
+#include <glm/gtc/matrix_transform.hpp>
 #include <smk/Color.hpp>
+#include <smk/Framebuffer.hpp>
 #include <smk/Shader.hpp>
 #include <smk/Shape.hpp>
-#include <smk/Window.hpp>
-#include <smk/Framebuffer.hpp>
 #include <smk/Sprite.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <smk/Window.hpp>
 
 int main() {
   // Open a new window.
@@ -21,7 +25,8 @@ int main() {
       gl_Position = projection * view * vec4(space_position, 0.0, 1.0);
       screen_position = gl_Position.xy;
     }
-  )", GL_VERTEX_SHADER);
+  )",
+                                               GL_VERTEX_SHADER);
 
   auto fragment_shader = smk::Shader::FromString(R"(
     in vec2 screen_position;
@@ -264,8 +269,8 @@ int main() {
 
   window.ExecuteMainLoop([&] {
     float time = window.time();
-    framebuffer.Clear({0.2,0.2,0.2,1.0});
-    //if (true)
+    framebuffer.Clear({0.2, 0.2, 0.2, 1.0});
+    // if (true)
     {
       auto view = smk::View();
       view.SetCenter(0.f, 0.f);
@@ -274,23 +279,22 @@ int main() {
 
       shader_program.Use();
       shader_program.SetUniform("time", time);
-      shader_program.SetUniform("square_rotation",
-                                glm::rotate(glm::mat4(1.0), time * 0.04f,
-                                            glm::vec3(0.f, 1.f, 0.f)));
-      shader_program.SetUniform("sphere_rotation",
-                                glm::rotate(glm::mat4(1.0), -time * 0.4f,
-                                            glm::vec3(0.f, 1.f, 0.f)));
+      shader_program.SetUniform(
+          "square_rotation",
+          glm::rotate(glm::mat4(1.0), time * 0.04f, glm::vec3(0.f, 1.f, 0.f)));
+      shader_program.SetUniform(
+          "sphere_rotation",
+          glm::rotate(glm::mat4(1.0), -time * 0.4f, glm::vec3(0.f, 1.f, 0.f)));
       framebuffer.Draw(square);
     }
 
-    window.Clear({0.2,0.2,0.2,1.0});
+    window.Clear({0.2, 0.2, 0.2, 1.0});
     window.PoolEvents();
     {
       window.shader_program_2d()->Use();
       auto square = smk::Sprite(framebuffer);
       square.SetScale(std::min(window.width(), window.height()) / float(size));
       window.Draw(square);
-
     }
     window.Display();
   });

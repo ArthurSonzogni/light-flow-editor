@@ -1,11 +1,15 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+
 #ifndef WIDGET_RENDER_WIDGET_HPP
 #define WIDGET_RENDER_WIDGET_HPP
 
-#include <smkflow/widget/Widget.hpp>
 #include <smk/Framebuffer.hpp>
 #include <smk/Shader.hpp>
 #include <smk/Sprite.hpp>
 #include <smk/Transformable.hpp>
+#include <smkflow/widget/Widget.hpp>
 
 extern float g_time;
 

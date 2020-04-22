@@ -1,3 +1,7 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+
 auto model_color = smkflow::model::Node{
     Node::Color,
     "Color",
@@ -12,9 +16,9 @@ auto model_color = smkflow::model::Node{
 };
 
 std::string BuildColor(smkflow::Node* node,
-                      const std::string& in,
-                      const std::string out,
-                      Context* context) {
+                       const std::string& in,
+                       const std::string out,
+                       Context* context) {
   // Input
   smkflow::Node* input_node = node->InputAt(0)->OppositeNode();
   std::string compute_input = BuildSDF(input_node, in, out, context);
