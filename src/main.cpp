@@ -25,23 +25,27 @@ float g_time;
 enum Node {
   Screen,
 
-  Number,
+  Slider,
   Time,
 
   NewVec3,
   Color,
 
   Union,
-  SmoothedUnion,
+  Difference,
   Intersection,
   Complement,
-  Difference,
+
+  SmoothUnion,
+  SmoothIntersection,
+  SmoothDifference,
 
   Repeat,
 
   Sphere,
   Torus,
   Cube,
+  Capsule,
 
   Translate,
   Scale,
@@ -114,22 +118,25 @@ std::string BuildUnimplemented(smkflow::Node* node, Context* context) {
                      node->Identifier());
 }
 
-#include "node/color.ipp"
-#include "node/complement.ipp"
-#include "node/cube.ipp"
-#include "node/difference.ipp"
-#include "node/intersection.ipp"
+#include "node/combine/complement.ipp"
+#include "node/combine/difference.ipp"
+#include "node/combine/intersection.ipp"
+#include "node/combine/smooth_union.ipp"
+#include "node/combine/smooth_intersection.ipp"
+#include "node/combine/smooth_difference.ipp"
+#include "node/combine/union.ipp"
 #include "node/new_vec3.ipp"
-#include "node/number.ipp"
-#include "node/repeat.ipp"
-#include "node/scale.ipp"
+#include "node/slider.ipp"
+#include "node/primitive/capsule.ipp"
+#include "node/primitive/cube.ipp"
+#include "node/primitive/sphere.ipp"
+#include "node/primitive/torus.ipp"
 #include "node/screen.ipp"
-#include "node/smoothed_union.ipp"
-#include "node/sphere.ipp"
 #include "node/time.ipp"
-#include "node/torus.ipp"
-#include "node/translate.ipp"
-#include "node/union.ipp"
+#include "node/transform/color.ipp"
+#include "node/transform/repeat.ipp"
+#include "node/transform/scale.ipp"
+#include "node/transform/translate.ipp"
 
 const char* header = R"(
 in vec2 screen_position;
@@ -227,28 +234,43 @@ std::string BuildSDF(smkflow::Node* node,
   if (!node)
     return BuildUnimplemented(context);
   switch (node->Identifier()) {
-    case Node::Color:
-      return BuildColor(node, in, out, context);
+    // -------------------------------------------------------------------------
     case Node::Cube:
       return BuildCube(node, in, out, context);
     case Node::Torus:
       return BuildTorus(node, in, out, context);
+    case Node::Capsule:
+      return BuildCapsule(node, in, out, context);
     case Node::Sphere:
       return BuildSphere(node, in, out, context);
+
+    // -------------------------------------------------------------------------
     case Node::Union:
       return BuildUnion(node, in, out, context);
-    case Node::SmoothedUnion:
-      return BuildSmoothedUnion(node, in, out, context);
     case Node::Intersection:
       return BuildIntersection(node, in, out, context);
     case Node::Difference:
       return BuildDifference(node, in, out, context);
+
+    // -------------------------------------------------------------------------
+    case Node::SmoothUnion:
+      return BuildSmoothUnion(node, in, out, context);
+    case Node::SmoothIntersection:
+      return BuildSmoothIntersection(node, in, out, context);
+    case Node::SmoothDifference:
+      return BuildSmoothDifference(node, in, out, context);
+
+    // -------------------------------------------------------------------------
     case Node::Scale:
       return BuildScale(node, in, out, context);
     case Node::Translate:
       return BuildTranslate(node, in, out, context);
     case Node::Repeat:
       return BuildRepeat(node, in, out, context);
+    case Node::Color:
+      return BuildColor(node, in, out, context);
+
+    // -------------------------------------------------------------------------
     default:
       return BuildUnimplemented(node, context);
   }
@@ -260,8 +282,8 @@ std::string BuildFloat(smkflow::Node* node,
   if (!node)
     return BuildUnimplemented(context);
   switch (node->Identifier()) {
-    case Node::Number:
-      return BuildNumber(node, out, context);
+    case Node::Slider:
+      return BuildSlider(node, out, context);
     default:
       return BuildUnimplemented(node, context);
   }
@@ -300,27 +322,36 @@ std::string Build(smkflow::Board* board) {
 }
 
 auto my_board = smkflow::model::Board{
+    //
     {
-        MenuEntry("screen", CreateNode(model_screen)),
-        Menu("Values",
+        Menu("Primitive",
              {
-                 MenuEntry("Number", CreateNode(model_number)),
-                 MenuEntry("Time", CreateNode(model_time)),
-                 MenuEntry("Vec3", CreateNode(model_new_vec3)),
-             }),
-        Menu("Shape",
-             {
-                 MenuEntry("Torus", CreateNode(model_torus)),
                  MenuEntry("Cube", CreateNode(model_cube)),
                  MenuEntry("Sphere", CreateNode(model_sphere)),
+                 MenuEntry("Torus", CreateNode(model_torus)),
+                 MenuEntry("Capsule", CreateNode(model_capsule)),
+             }),
+        Menu("Values",
+             {
+                 MenuEntry("Slider", CreateNode(model_slider)),
+                 MenuEntry("Time", CreateNode(model_time)),
+                 MenuEntry("Vec3", CreateNode(model_new_vec3)),
              }),
         Menu("Combine",
              {
                  MenuEntry("Union", CreateNode(model_union)),
-                 MenuEntry("Smoothed_union", CreateNode(model_smoothed_union)),
-                 MenuEntry("Complement", CreateNode(model_complement)),
                  MenuEntry("Difference", CreateNode(model_difference)),
                  MenuEntry("Intersection", CreateNode(model_intersection)),
+                 MenuEntry("Complement", CreateNode(model_complement)),
+                 Menu("Smooth",
+                      {
+                          MenuEntry("Smooth_union",
+                                    CreateNode(model_smooth_union)),
+                          MenuEntry("Smooth_difference",
+                                    CreateNode(model_smooth_difference)),
+                          MenuEntry("Smooth_intersection",
+                                    CreateNode(model_smooth_intersection)),
+                      }),
              }),
         Menu("Transform",
              {
@@ -329,6 +360,7 @@ auto my_board = smkflow::model::Board{
                  MenuEntry("Scale", CreateNode(model_scale)),
                  MenuEntry("Translate", CreateNode(model_translate)),
              }),
+        MenuEntry("screen", CreateNode(model_screen)),
     },
     "../resources/arial.ttf",
 };

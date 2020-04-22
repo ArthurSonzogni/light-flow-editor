@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in
 // the LICENSE file.
 
-auto model_smoothed_union = smkflow::model::Node{
-    Node::SmoothedUnion,
+auto model_smooth_union = smkflow::model::Node{
+    Node::SmoothUnion,
     "Smooth Union",
     model_type_fusion,
     {
@@ -13,15 +13,15 @@ auto model_smoothed_union = smkflow::model::Node{
     {
         {"a+b", type_sdf},
     },
-    smkflow::Slider(0.f, 1.f, 0.5f, "Smooth = {:.2f}"),
+    smkflow::Slider(0.f, 100, 50, "{:.0f}%"),
 };
 
-std::string BuildSmoothedUnion(smkflow::Node* node,
+std::string BuildSmoothUnion(smkflow::Node* node,
                                const std::string& in,
                                const std::string& out,
                                Context* context) {
   context->RegisterFunction(R"(
-    Value SmoothedUnion(float k, Value a, Value b) {
+    Value SmoothUnion(float k, Value a, Value b) {
       Value value;
       float lambda = clamp(0.5 + 0.5 * (b.distance - a.distance) / k, 0.0, 1.0);
       value.distance = mix(b.distance, a.distance, lambda) - k*lambda*(1.0-lambda);
@@ -33,7 +33,7 @@ std::string BuildSmoothedUnion(smkflow::Node* node,
     }
   )");
 
-  float smooth = smkflow::Slider(node->widget())->GetValue();
+  float smooth = smkflow::Slider(node->widget())->GetValue() * 0.05;
   smkflow::Node* input_a = node->InputAt(0)->OppositeNode();
   smkflow::Node* input_b = node->InputAt(1)->OppositeNode();
   auto out_a = context->Identifier();
@@ -43,6 +43,6 @@ std::string BuildSmoothedUnion(smkflow::Node* node,
   return fmt::format(
       "{}\n"
       "{}\n"
-      "Value {} = SmoothedUnion({}, {},{});",
+      "Value {} = SmoothUnion({}, {},{});",
       inner_a, inner_b, out, smooth, out_a, out_b);
 }

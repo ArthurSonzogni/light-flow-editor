@@ -2,18 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in
 // the LICENSE file.
 
-auto model_number = smkflow::model::Node{
-    Node::Number,
-    "number",
+auto model_slider = smkflow::model::Node{
+    Node::Slider,
+    "slider",
     model_type_primitive,
     {},
     {
-        {"out", type_float},
+        {"", type_float},
     },
     smkflow::Slider(-10.f, 10.f, 0.f, "{:.2f}"),
 };
 
-std::string BuildNumber(smkflow::Node* node,
+std::string BuildSlider(smkflow::Node* node,
                         const std::string& out,
                         Context* context) {
   float value = smkflow::Slider(node->widget())->GetValue();
