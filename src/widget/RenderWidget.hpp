@@ -5,7 +5,6 @@
 #ifndef WIDGET_RENDER_WIDGET_HPP
 #define WIDGET_RENDER_WIDGET_HPP
 
-#include <smk/Framebuffer.hpp>
 #include <smk/Shader.hpp>
 #include <smk/Sprite.hpp>
 #include <smk/Transformable.hpp>
@@ -24,16 +23,11 @@ class RenderWidget : public smkflow::Widget {
   void Build(std::string new_code);
 
  private:
-  void BuildFrameBuffer();
-
-  float size_ = 256;
   std::string code_;
 
   smkflow::CursorCapture cursor_captured_;
   glm::vec2 cursor_camera_drag_ = {0.f, 0.f};
   glm::vec2 camera_angle_ = {0.f, 0.f};
-
-  smk::Framebuffer framebuffer_;
 
   smk::ShaderProgram shader_program_;
   smk::Shader vertex_shader_;

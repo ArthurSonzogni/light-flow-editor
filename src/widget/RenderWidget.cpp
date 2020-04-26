@@ -10,13 +10,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <smk/Input.hpp>
 #include <smk/Shape.hpp>
+#include <smk/RenderTarget.hpp>
 
 float sensibility = 0.01f;
 
 const char* header = R"(
 in vec2 screen_position;
 uniform vec4 color;
-uniform mat4 the_view;
+uniform mat4 camera;
 uniform float time;
 out vec4 out_color;
 
@@ -72,14 +73,14 @@ void main() {
   vec3 direction = normalize(vec3(screen_position, 1.f));
   vec3 position = vec3(0.f);
 
-  position = (the_view * vec4(position, 1.f)).xyz;
-  direction = normalize(the_view * vec4(direction, 0.f)).xyz;
+  position = (camera * vec4(position, 1.f)).xyz;
+  direction = normalize(camera * vec4(direction, 0.f)).xyz;
 
   position = ray(position, direction);
   if (dot(position, position) > 10000.f) {
     out_color = vec4(0.f, 0.f, 0.f, 1.f);
   } else {
-    vec3 light_position = vec3(3.f, 5.f, 0.f);
+    vec3 light_position = vec3(3.f, 5.f, -1.f);
     vec3 light_direction = normalize(light_position - position);
     vec3 surface_direction = differential(position);
     vec3 reflection_direction = -reflect(direction, surface_direction);
@@ -88,17 +89,14 @@ void main() {
     float diffuse_color = 0.6 * max(0.f, dot(surface_direction, light_direction));
     float specular_color = 0.2 * max(0.f, pow(dot(reflection_direction, light_direction), 3.0));
 
-    float phong = ambient_color + diffuse_color + specular_color;
     vec3 color = sdf(position).color;
     
-    position += 0.01f * surface_direction;
     direction = light_direction;
 
     float shadow = 0.2+0.8*softshadow(position, light_direction,
         0.1f, distance(position, light_position), 20.f );
 
-    phong *= shadow;
-    color *= phong;
+    color *= ambient_color + shadow * (diffuse_color + specular_color);
     out_color = vec4(color, 1.f);
   }
 }
@@ -117,10 +115,18 @@ RenderWidget* RenderWidget::From(smkflow::Widget* node) {
 }
 
 RenderWidget::RenderWidget(smkflow::Widget::Delegate* delegate)
-    : smkflow::Widget(delegate), framebuffer_(16, 16) {
-  square_ = smk::Shape::Square();
-  square_.SetPosition(-0.5f, -0.5f);
-  square_.SetScale(1.0f, 1.f);
+    : smkflow::Widget(delegate) {
+  camera_angle_ = {-M_PI / 4 / sensibility, (-M_PI / 8) / sensibility};
+  square_ = smk::Shape::FromVertexArray(smk::VertexArray({
+      {{0.f, 0.f}, {-0.5f, +0.5f}},
+      {{0.f, 1.f}, {-0.5f, -0.5f}},
+      {{1.f, 1.f}, {+0.5f, -0.5f}},
+
+      {{0.f, 0.f}, {-0.5f, +0.5f}},
+      {{1.f, 1.f}, {+0.5f, -0.5f}},
+      {{1.f, 0.f}, {+0.5f, +0.5f}},
+  }));
+  square_.SetScale(256.f, 256.f);
 
   vertex_shader_ = smk::Shader::FromString(R"(
       layout(location = 0) in vec2 space_position;
@@ -130,7 +136,7 @@ RenderWidget::RenderWidget(smkflow::Widget::Delegate* delegate)
       out vec2 screen_position;
       void main() {
         gl_Position = projection * view * vec4(space_position, 0.0, 1.0);
-        screen_position = gl_Position.xy;
+        screen_position = texture_position.xy;
       }
     )",
                                            GL_VERTEX_SHADER);
@@ -149,8 +155,6 @@ RenderWidget::RenderWidget(smkflow::Widget::Delegate* delegate)
   shader_program_.AddShader(vertex_shader_);
   shader_program_.AddShader(fragment_shader_);
   shader_program_.Link();
-
-  BuildFrameBuffer();
 }
 
 bool RenderWidget::Step(smk::Input* input, const glm::vec2& cursor) {
@@ -185,30 +189,23 @@ glm::vec2 RenderWidget::ComputeDimensions() {
 }
 
 void RenderWidget::Draw(smk::RenderTarget* target) {
-  framebuffer_.Clear({0.2, 0.2, 0.2, 1.0});
-  framebuffer_.SetShaderProgram(&shader_program_);
-
-  auto view = smk::View();
-  view.SetCenter(0.f, 0.f);
-  view.SetSize(1.f, 1.f);
-  framebuffer_.SetView(view);
+  target->SetShaderProgram(&shader_program_);
 
   shader_program_.Use();
   shader_program_.SetUniform("time", g_time);
 
   {
-  glm::mat4 view = glm::mat4(1.f);
-  view = glm::rotate(view, camera_angle_.x * sensibility, glm::vec3(0.f, 1.f, 0.f));
-  view = glm::rotate(view, camera_angle_.y * sensibility, glm::vec3(1.f, 0.f, 0.f));
-  view = glm::translate(view, glm::vec3(0.f, +3.f, -3.f));
-  view =
-      glm::rotate(view, float(M_PI / 4.f), glm::vec3(1.f, 0.f, 0.f));
-  shader_program_.SetUniform("the_view", view);
+    glm::mat4 cam = glm::mat4(1.f);
+    cam = glm::rotate(cam, camera_angle_.x * sensibility, {0.f, 1.f, 0.f});
+    cam = glm::rotate(cam, camera_angle_.y * sensibility, {1.f, 0.f, 0.f});
+    cam = glm::translate(cam, glm::vec3(0.f, +6.f, -6.f));
+    cam = glm::rotate(cam, float(M_PI / 4.f), glm::vec3(1.f, 0.f, 0.f));
+    shader_program_.SetUniform("camera", cam);
   }
-  framebuffer_.Draw(square_);
+  square_.SetPosition(Position());
+  target->Draw(square_);
 
-  sprite_.SetPosition(Position());
-  target->Draw(sprite_);
+  target->SetShaderProgram(target->shader_program_2d());
 }
 
 void RenderWidget::Build(std::string new_code) {
@@ -226,10 +223,4 @@ void RenderWidget::Build(std::string new_code) {
   shader_program_.AddShader(fragment_shader_);
   shader_program_.Link();
   return;
-}
-
-void RenderWidget::BuildFrameBuffer() {
-  framebuffer_ = smk::Framebuffer(size_, size_);
-  sprite_ = smk::Sprite(framebuffer_);
-  sprite_.SetScale(256.f / size_, 256.f / size_);
 }
