@@ -1,7 +1,3 @@
-// Copyright 2020 Arthur Sonzogni. All rights reserved.
-// Use of this source code is governed by the MIT license that can be found in
-// the LICENSE file.
-
 auto model_screen = smkflow::model::Node{
     Node::Screen,
     "Screen",
@@ -13,18 +9,19 @@ auto model_screen = smkflow::model::Node{
     RenderWidget::Create(),
 };
 
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file./
 std::string BuildScreen(smkflow::Node* node, Context* context) {
   smkflow::Node* input_node = node->InputAt(0)->OppositeNode();
   std::string in = context->Identifier();
   std::string out = context->Identifier();
-  std::string transformed_in = context->Identifier();
-  std::string inner = BuildSDF(input_node, transformed_in, out, context);
+  std::string inner = BuildSDF(input_node, in, out, context);
   return fmt::format(
-      "{0}\n"
-      "Value sdf(vec3 {1}) {{\n"
-      "  vec3 {3} = (sphere_rotation * vec4({2}, 1.0)).xyz;\n"
-      "{4}\n"
-      "  return {5};\n"
+      "{}\n"
+      "Value sdf(vec3 {}) {{\n"
+      "{}\n"
+      "  return {};\n"
       "}}",
-      context->RegisteredFunction(), in, in, transformed_in, inner, out);
+      context->RegisteredFunction(), in, inner, out);
 }

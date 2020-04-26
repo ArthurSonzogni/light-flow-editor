@@ -11,3 +11,9 @@ auto model_time = smkflow::model::Node{
         {"out", type_float},
     },
 };
+
+std::string BuildTime(smkflow::Node* node,
+                      const std::string& out,
+                      Context* context) {
+  return fmt::format("  float {} = time;", out);
+}

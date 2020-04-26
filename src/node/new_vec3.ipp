@@ -25,9 +25,31 @@ std::string BuildNewVec3(smkflow::Node* node,
                          const std::string& out,
                          Context* context) {
   auto box = smkflow::Box(node->widget());
-  float DX = smkflow::Slider(box->ChildAt(0))->GetValue();
-  float DY = smkflow::Slider(box->ChildAt(1))->GetValue();
-  float DZ = smkflow::Slider(box->ChildAt(2))->GetValue();
 
-  return fmt::format("  vec3 {} = vec3({},{},{});", out, DX, DY, DZ);
+  std::string DX =
+      fmt::format("{}", smkflow::Slider(box->ChildAt(0))->GetValue());
+  std::string DY =
+      fmt::format("{}", smkflow::Slider(box->ChildAt(1))->GetValue());
+  std::string DZ =
+      fmt::format("{}", smkflow::Slider(box->ChildAt(2))->GetValue());
+
+  std::string compute_dx;
+  std::string compute_dy;
+  std::string compute_dz;
+
+  if (auto* in = node->InputAt(0)->OppositeNode()) {
+    DX = context->Identifier();
+    compute_dx = BuildFloat(in, DX, context) + "\n";
+  }
+  if (auto* in = node->InputAt(1)->OppositeNode()) {
+    DY = context->Identifier();
+    compute_dy = BuildFloat(in, DY, context) + "\n";
+  }
+  if (auto* in = node->InputAt(2)->OppositeNode()) {
+    DZ = context->Identifier();
+    compute_dz = BuildFloat(in, DZ, context) + "\n";
+  }
+
+ return fmt::format("{}{}{}  vec3 {} = vec3({},{},{});", compute_dx,
+                     compute_dy, compute_dz, out, DX, DY, DZ);
 }

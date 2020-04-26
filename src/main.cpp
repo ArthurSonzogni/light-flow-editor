@@ -49,6 +49,13 @@ enum Node {
 
   Translate,
   Scale,
+
+  MathSin,
+  MathCos,
+  MathAdd,
+  MathSub,
+  MathMul,
+  MathDiv,
 };
 
 auto type_float = glm::vec4{0.7f, 0.7f, 1.f, 1.f};
@@ -59,6 +66,7 @@ auto model_type_fusion = glm::vec4{0.5, 0.4, 0.4, 1.0f};
 auto model_type_screen = glm::vec4{0.5, 0.5, 0.5, 1.0f};
 auto model_type_primitive = glm::vec4{0.4, 0.5, 0.4, 1.0f};
 auto model_type_transformation = glm::vec4{0.4, 0.4, 0.5, 1.0f};
+auto model_type_math = glm::vec4{0.7f, 0.7f, 0.4f, 1.f};
 
 using smkflow::CreateNode;
 using smkflow::Menu;
@@ -121,111 +129,24 @@ std::string BuildUnimplemented(smkflow::Node* node, Context* context) {
 #include "node/combine/complement.ipp"
 #include "node/combine/difference.ipp"
 #include "node/combine/intersection.ipp"
-#include "node/combine/smooth_union.ipp"
-#include "node/combine/smooth_intersection.ipp"
 #include "node/combine/smooth_difference.ipp"
+#include "node/combine/smooth_intersection.ipp"
+#include "node/combine/smooth_union.ipp"
 #include "node/combine/union.ipp"
+#include "node/math/operations.ipp"
+#include "node/math/trigonometry.ipp"
 #include "node/new_vec3.ipp"
-#include "node/slider.ipp"
 #include "node/primitive/capsule.ipp"
 #include "node/primitive/cube.ipp"
 #include "node/primitive/sphere.ipp"
 #include "node/primitive/torus.ipp"
 #include "node/screen.ipp"
+#include "node/slider.ipp"
 #include "node/time.ipp"
 #include "node/transform/color.ipp"
 #include "node/transform/repeat.ipp"
 #include "node/transform/scale.ipp"
 #include "node/transform/translate.ipp"
-
-const char* header = R"(
-in vec2 screen_position;
-uniform vec4 color;
-uniform mat4 square_rotation;
-uniform mat4 sphere_rotation;
-uniform float time;
-out vec4 out_color;
-
-struct Value {
-  vec3 color;
-  float distance;
-};
-
-)";
-
-const char* footer = R"(
-
-vec3 differential(vec3 position) {
-  float d = 0.001f;
-  float b = sdf(position).distance;
-  float fx = sdf(position + vec3(+d, +0, +0)).distance;
-  float fy = sdf(position + vec3(+0, +d, +0)).distance;
-  float fz = sdf(position + vec3(+0, +0, +d)).distance;
-  return normalize(vec3(fx,fy, fz) - vec3(b));
-}
-
-vec3 ray(vec3 pos, vec3 direction) {
-  float distance = 0.f;
-  for(int i = 0; i<64; ++i) {
-    distance = sdf(pos).distance;
-    pos += direction * distance;
-    if (distance < 0.001f)
-      break;
-  }
-
-  return pos;
-}
-
-float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k ) {
-    float res = 1.0;
-    float ph = 1e20;
-    for( float t=mint; t<maxt; )
-    {
-        float h = sdf(ro + rd*t).distance;
-        if( h<0.001 )
-            return 0.0;
-        float y = h*h/(2.0*ph);
-        float d = sqrt(h*h-y*y);
-        res = min( res, k*d/max(0.0,t-y) );
-        ph = h;
-        t += h * 0.1;
-    }
-    return res;
-}
-void main() {
-  vec3 direction = normalize(vec3(screen_position, 1.f));
-  vec3 position = vec3(0.f);
-
-  position = ray(position, direction);
-  if (position.z > 100.f) {
-    out_color = vec4(0.f, 0.f, 0.f, 1.f);
-
-  } else {
-
-    vec3 light_position = vec3(1.f, 3.1, -1.1);
-    vec3 light_direction = normalize(light_position - position);
-    vec3 surface_direction = differential(position);
-    vec3 reflection_direction = -reflect(direction, surface_direction);
-
-    float ambient_color = 0.2;
-    float diffuse_color = 0.6 * max(0.f, dot(surface_direction, light_direction));
-    float specular_color = 0.2 * max(0.f, pow(dot(reflection_direction, light_direction), 3.0));
-
-    float phong = ambient_color + diffuse_color + specular_color;
-    vec3 color = sdf(position).color;
-    
-    position += 0.01f * surface_direction;
-    direction = light_direction;
-
-    float shadow = 0.2+0.8*softshadow(position, light_direction,
-        0.1f, distance(position, light_position), 5.f );
-
-    phong *= shadow;
-    color *= phong;
-    out_color = vec4(color, 1.f);
-  }
-}
-)";
 
 std::string BuildSDF(smkflow::Node* node,
                      const std::string& in,
@@ -284,6 +205,20 @@ std::string BuildFloat(smkflow::Node* node,
   switch (node->Identifier()) {
     case Node::Slider:
       return BuildSlider(node, out, context);
+    case Node::MathSin:
+      return BuildMathSin(node, out, context);
+    case Node::MathCos:
+      return BuildMathCos(node, out, context);
+    case Node::MathAdd:
+      return BuildMathAdd(node, out, context);
+    case Node::MathSub:
+      return BuildMathSub(node, out, context);
+    case Node::MathMul:
+      return BuildMathMul(node, out, context);
+    case Node::MathDiv:
+      return BuildMathDiv(node, out, context);
+    case Node::Time:
+      return BuildTime(node, out, context);
     default:
       return BuildUnimplemented(node, context);
   }
@@ -316,52 +251,67 @@ std::string Build(smkflow::Board* board) {
       continue;
 
     auto widget = RenderWidget::From(node->widget());
-    widget->Build(header + out + footer);
+    widget->Build(out);
   }
   return "";
 }
 
+auto menu = {
+    Menu("Primitive",
+         {
+             MenuEntry("Cube", CreateNode(model_cube)),
+             MenuEntry("Sphere", CreateNode(model_sphere)),
+             MenuEntry("Torus", CreateNode(model_torus)),
+             MenuEntry("Capsule", CreateNode(model_capsule)),
+         }),
+    Menu("Values",
+         {
+             MenuEntry("Slider", CreateNode(model_slider)),
+             MenuEntry("Time", CreateNode(model_time)),
+             MenuEntry("Vec3", CreateNode(model_new_vec3)),
+         }),
+    Menu("Combine",
+         {
+             MenuEntry("Union", CreateNode(model_union)),
+             MenuEntry("Difference", CreateNode(model_difference)),
+             MenuEntry("Intersection", CreateNode(model_intersection)),
+             MenuEntry("Complement", CreateNode(model_complement)),
+             Menu("Smooth",
+                  {
+                      MenuEntry("Union", CreateNode(model_smooth_union)),
+                      MenuEntry("Difference",
+                                CreateNode(model_smooth_difference)),
+                      MenuEntry("Intersection",
+                                CreateNode(model_smooth_intersection)),
+                  }),
+         }),
+    Menu("Transform",
+         {
+             MenuEntry("Color", CreateNode(model_color)),
+             MenuEntry("Repeat", CreateNode(model_repeat)),
+             MenuEntry("Scale", CreateNode(model_scale)),
+             MenuEntry("Translate", CreateNode(model_translate)),
+         }),
+    Menu("Math",
+         {
+             Menu("Operations",
+                  {
+                      MenuEntry("Add", CreateNode(model_math_add)),
+                      MenuEntry("Substract", CreateNode(model_math_sub)),
+                      MenuEntry("Multiply", CreateNode(model_math_mul)),
+                      MenuEntry("Divide", CreateNode(model_math_div)),
+                  }),
+             Menu("Functions",
+                  {
+                      MenuEntry("Sin", CreateNode(model_math_sin)),
+                      MenuEntry("Cos", CreateNode(model_math_cos)),
+                  }),
+         }),
+    MenuEntry("screen", CreateNode(model_screen)),
+};
+
 auto my_board = smkflow::model::Board{
-    //
-    {
-        Menu("Primitive",
-             {
-                 MenuEntry("Cube", CreateNode(model_cube)),
-                 MenuEntry("Sphere", CreateNode(model_sphere)),
-                 MenuEntry("Torus", CreateNode(model_torus)),
-                 MenuEntry("Capsule", CreateNode(model_capsule)),
-             }),
-        Menu("Values",
-             {
-                 MenuEntry("Slider", CreateNode(model_slider)),
-                 MenuEntry("Time", CreateNode(model_time)),
-                 MenuEntry("Vec3", CreateNode(model_new_vec3)),
-             }),
-        Menu("Combine",
-             {
-                 MenuEntry("Union", CreateNode(model_union)),
-                 MenuEntry("Difference", CreateNode(model_difference)),
-                 MenuEntry("Intersection", CreateNode(model_intersection)),
-                 MenuEntry("Complement", CreateNode(model_complement)),
-                 Menu("Smooth",
-                      {
-                          MenuEntry("Smooth_union",
-                                    CreateNode(model_smooth_union)),
-                          MenuEntry("Smooth_difference",
-                                    CreateNode(model_smooth_difference)),
-                          MenuEntry("Smooth_intersection",
-                                    CreateNode(model_smooth_intersection)),
-                      }),
-             }),
-        Menu("Transform",
-             {
-                 MenuEntry("Color", CreateNode(model_color)),
-                 MenuEntry("Repeat", CreateNode(model_repeat)),
-                 MenuEntry("Scale", CreateNode(model_scale)),
-                 MenuEntry("Translate", CreateNode(model_translate)),
-             }),
-        MenuEntry("screen", CreateNode(model_screen)),
-    },
+    menu,
     "../resources/arial.ttf",
 };
 

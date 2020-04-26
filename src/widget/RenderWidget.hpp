@@ -19,12 +19,19 @@ class RenderWidget : public smkflow::Widget {
   static RenderWidget* From(smkflow::Widget* node);
   RenderWidget(smkflow::Widget::Delegate* delegate);
   glm::vec2 ComputeDimensions() override;
+  bool Step(smk::Input*, const glm::vec2&) override;
   void Draw(smk::RenderTarget* target) override;
   void Build(std::string new_code);
 
  private:
+  void BuildFrameBuffer();
+
   float size_ = 256;
   std::string code_;
+
+  smkflow::CursorCapture cursor_captured_;
+  glm::vec2 cursor_camera_drag_ = {0.f, 0.f};
+  glm::vec2 camera_angle_ = {0.f, 0.f};
 
   smk::Framebuffer framebuffer_;
 
