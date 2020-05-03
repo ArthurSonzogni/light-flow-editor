@@ -1,13 +1,9 @@
 include(FetchContent)
 
 set(FETCHCONTENT_UPDATES_DISCONNECTED false)
-#FetchContent_Declare(smkflow
-  #GIT_REPOSITORY git@github.com:ArthurSonzogni/smkflow
-  #GIT_TAG 8ac7b321fabf9d17ee2411b3437d13c1df11dfc2
-#)
 FetchContent_Declare(smkflow
-  GIT_REPOSITORY /home/sonzogna/programmation/real/smkflow/
-  GIT_TAG HEAD
+  GIT_REPOSITORY https://github.com/ArthurSonzogni/smkflow
+  GIT_TAG 704a6e3453f3bdc506a97c36e4bc3a6c1a651f2d
 )
 
 FetchContent_GetProperties(smkflow)
