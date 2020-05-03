@@ -69,6 +69,48 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k ) {
     return res;
 }
 
+vec3 GetColor(vec3 position, vec3 direction, int reflect_step) {
+  vec3 final_color = vec3(0.f, 0.f, 0.f);
+  float next_reflection_lambda = 1.f;
+  for(int step = 0; step<reflect_step; ++step) {
+    position = ray(position, direction);
+    if (dot(position, position) > 10000.f)
+      return final_color;
+
+    vec3 light_position = vec3(3.f, 5.f, -1.f);
+    vec3 light_direction = normalize(light_position - position);
+    vec3 surface_direction = normalize(differential(position));
+    vec3 reflection_direction = reflect(direction, surface_direction);
+
+    float ambient_color = 0.2;
+    float diffuse_color = 0.6 * max(0.f, dot(surface_direction, light_direction));
+    float specular_color = 0.2 * max(0.f, pow(dot(reflection_direction, light_direction), 16.f));
+
+    Value value = sdf(position);
+    if (value.distance > 0.01f)
+      return final_color;
+
+    vec3 color = value.color;
+    
+    float shadow = softshadow(position, light_direction,
+        0.1f, distance(position, light_position), 20.f );
+
+    float ambient_occlusion = 
+      clamp(0.f, sdf(position + surface_direction * 0.05f).distance / 0.05f, 1.f);
+
+    color *= ambient_color * ambient_occlusion +
+             diffuse_color * 0.1 +
+             shadow * (diffuse_color + specular_color);
+
+    direction = reflection_direction;
+    position += 0.02f * direction;
+    color = clamp(vec3(0.f), color, vec3(1.f));
+    final_color = (1.0 - next_reflection_lambda) * final_color + next_reflection_lambda * color;
+    next_reflection_lambda *= 0.4;
+  }
+  return final_color;
+}
+
 void main() {
   vec3 direction = normalize(vec3(screen_position, 1.f));
   vec3 position = vec3(0.f);
@@ -76,30 +118,9 @@ void main() {
   position = (camera * vec4(position, 1.f)).xyz;
   direction = normalize(camera * vec4(direction, 0.f)).xyz;
 
-  position = ray(position, direction);
-  if (dot(position, position) > 10000.f) {
-    out_color = vec4(0.f, 0.f, 0.f, 1.f);
-  } else {
-    vec3 light_position = vec3(3.f, 5.f, -1.f);
-    vec3 light_direction = normalize(light_position - position);
-    vec3 surface_direction = differential(position);
-    vec3 reflection_direction = -reflect(direction, surface_direction);
-
-    float ambient_color = 0.2;
-    float diffuse_color = 0.6 * max(0.f, dot(surface_direction, light_direction));
-    float specular_color = 0.2 * max(0.f, pow(dot(reflection_direction, light_direction), 3.0));
-
-    vec3 color = sdf(position).color;
-    
-    direction = light_direction;
-
-    float shadow = 0.2+0.8*softshadow(position, light_direction,
-        0.1f, distance(position, light_position), 20.f );
-
-    color *= ambient_color + shadow * (diffuse_color + specular_color);
-    out_color = vec4(color, 1.f);
-  }
+  out_color = vec4(GetColor(position, direction, 3), 1.f);
 }
+
 )";
 
 // static
@@ -213,6 +234,7 @@ void RenderWidget::Build(std::string new_code) {
     return;
   if (new_code == code_)
     return;
+  fmt::print("{}",new_code);
 
   code_ = std::move(new_code);
 

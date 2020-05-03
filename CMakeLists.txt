@@ -11,7 +11,6 @@ add_executable(lightfloweditor
   src/main.cpp
   src/widget/RenderWidget.hpp
   src/widget/RenderWidget.cpp
-  #src/main_sphere_tracing.cpp
 )
 
 target_include_directories(lightfloweditor PRIVATE src)

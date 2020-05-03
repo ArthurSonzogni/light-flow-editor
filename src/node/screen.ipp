@@ -1,3 +1,7 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file./
+
 auto model_screen = smkflow::model::Node{
     Node::Screen,
     "Screen",
@@ -9,9 +13,6 @@ auto model_screen = smkflow::model::Node{
     RenderWidget::Create(),
 };
 
-// Copyright 2020 Arthur Sonzogni. All rights reserved.
-// Use of this source code is governed by the MIT license that can be found in
-// the LICENSE file./
 std::string BuildScreen(smkflow::Node* node, Context* context) {
   smkflow::Node* input_node = node->InputAt(0)->OppositeNode();
   std::string in = context->Identifier();

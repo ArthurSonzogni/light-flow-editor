@@ -4,6 +4,7 @@
 
 #include <fmt/core.h>
 
+#include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <set>
@@ -48,6 +49,7 @@ enum Node {
   Capsule,
 
   Translate,
+  Rotate,
   Scale,
 
   MathSin,
@@ -77,11 +79,7 @@ class Context {
   std::string Identifier() {
     std::string out;
     int v = ++value_;
-    while (v) {
-      out += ('a' + v % 26);
-      v /= 26;
-    }
-    return out;
+    return "v" + std::to_string(v);
   }
 
   void RegisterFunction(const char* f) { function_set_.insert(f); }
@@ -147,6 +145,7 @@ std::string BuildUnimplemented(smkflow::Node* node, Context* context) {
 #include "node/transform/repeat.ipp"
 #include "node/transform/scale.ipp"
 #include "node/transform/translate.ipp"
+#include "node/transform/rotate.ipp"
 
 std::string BuildSDF(smkflow::Node* node,
                      const std::string& in,
@@ -186,6 +185,8 @@ std::string BuildSDF(smkflow::Node* node,
       return BuildScale(node, in, out, context);
     case Node::Translate:
       return BuildTranslate(node, in, out, context);
+    case Node::Rotate:
+      return BuildRotate(node, in, out, context);
     case Node::Repeat:
       return BuildRepeat(node, in, out, context);
     case Node::Color:
@@ -256,7 +257,22 @@ std::string Build(smkflow::Board* board) {
   return "";
 }
 
+auto save = [](smkflow::ActionContext* context) {
+  std::ofstream("save.json") << context->board()->Serialize();
+};
+
+auto load = [](smkflow::ActionContext* context) {
+  smkflow::JSON json;
+  std::ifstream("save.json") >> json;
+  context->board()->Deserialize(json);
+};
+
 auto menu = {
+    Menu("File",
+         {
+             MenuEntry("Load", load),
+             MenuEntry("Save", save),
+         }),
     Menu("Primitive",
          {
              MenuEntry("Cube", CreateNode(model_cube)),
@@ -291,6 +307,7 @@ auto menu = {
              MenuEntry("Repeat", CreateNode(model_repeat)),
              MenuEntry("Scale", CreateNode(model_scale)),
              MenuEntry("Translate", CreateNode(model_translate)),
+             MenuEntry("Rotate", CreateNode(model_rotate)),
          }),
     Menu("Math",
          {
@@ -311,7 +328,35 @@ auto menu = {
 };
 
 auto my_board = smkflow::model::Board{
-    menu,
+    {
+        model_cube,
+        model_sphere,
+        model_torus,
+        model_capsule,
+        model_slider,
+        model_time,
+        model_new_vec3,
+        model_union,
+        model_difference,
+        model_intersection,
+        model_complement,
+        model_smooth_union,
+        model_smooth_difference,
+        model_smooth_intersection,
+        model_color,
+        model_repeat,
+        model_scale,
+        model_translate,
+        model_rotate,
+        model_math_add,
+        model_math_sub,
+        model_math_mul,
+        model_math_div,
+        model_math_sin,
+        model_math_cos,
+        model_screen,
+    },
+    {menu},
     "../resources/arial.ttf",
 };
 
