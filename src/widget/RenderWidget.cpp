@@ -234,7 +234,7 @@ void RenderWidget::Build(std::string new_code) {
     return;
   if (new_code == code_)
     return;
-  fmt::print("{}",new_code);
+  //fmt::print("{}",new_code);
 
   code_ = std::move(new_code);
 
