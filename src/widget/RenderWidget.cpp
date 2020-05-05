@@ -12,6 +12,10 @@
 #include <smk/Shape.hpp>
 #include <smk/RenderTarget.hpp>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 float sensibility = 0.01f;
 
 const char* header = R"(
