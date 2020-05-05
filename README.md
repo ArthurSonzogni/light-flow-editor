@@ -10,7 +10,7 @@ LightFlowEditor
 [badge.license]: https://img.shields.io/github/license/arthursonzogni/light-flow-editor?color=black
 [badge.contributors]: https://img.shields.io/github/contributors/arthursonzogni/light-flow-editor?color=blue
 
-[travis]: https://travis-ci.org/ArthurSonzogni/light-flow-editor
+[travis]: https://travis-ci.com/ArthurSonzogni/light-flow-editor
 [issues]: https://github.com/ArthurSonzogni/light-flow-editor/issues
 [license]: http://opensource.org/licenses/MIT
 [contributors]: https://github.com/ArthurSonzogni/light-flow-editor/graphs/contributors
