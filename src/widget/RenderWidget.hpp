@@ -16,11 +16,14 @@ class RenderWidget : public smkflow::Widget {
  public:
   static smkflow::WidgetFactory Create();
   static RenderWidget* From(smkflow::Widget* node);
+
   RenderWidget(smkflow::Widget::Delegate* delegate);
   glm::vec2 ComputeDimensions() override;
   bool Step(smk::Input*, const glm::vec2&) override;
   void Draw(smk::RenderTarget* target) override;
   void Build(std::string new_code);
+
+  const std::string& code() { return code_; }
 
  private:
   std::string code_;
@@ -32,6 +35,11 @@ class RenderWidget : public smkflow::Widget {
   smk::ShaderProgram shader_program_;
   smk::Shader vertex_shader_;
   smk::Shader fragment_shader_;
+
+  bool has_new_code_ = false;
+  bool pending_compilation_ = false;
+  smk::ShaderProgram shader_program_new_;
+  smk::Shader fragment_shader_new_;
 
   smk::Sprite sprite_;
 

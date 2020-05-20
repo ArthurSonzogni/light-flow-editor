@@ -7,11 +7,11 @@ auto model_difference = smkflow::model::Node{
     "Difference",
     model_type_fusion,
     {
-        {"a", type_sdf},
-        {"b", type_sdf},
+        {"", type_sdf},
+        {"", type_sdf},
     },
     {
-        {"a-b", type_sdf},
+        {"", type_sdf},
     },
 };
 

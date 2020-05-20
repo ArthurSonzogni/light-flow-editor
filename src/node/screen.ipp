@@ -7,7 +7,7 @@ auto model_screen = smkflow::model::Node{
     "Screen",
     model_type_screen,
     {
-        {"in", type_sdf},
+        {"", type_sdf},
     },
     {},
     RenderWidget::Create(),

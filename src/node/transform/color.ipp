@@ -11,7 +11,7 @@ auto model_color = smkflow::model::Node{
         {"color", type_vec3},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

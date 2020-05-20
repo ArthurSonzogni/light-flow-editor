@@ -8,7 +8,7 @@ auto model_time = smkflow::model::Node{
     model_type_primitive,
     {},
     {
-        {"out", type_float},
+        {"", type_float},
     },
 };
 

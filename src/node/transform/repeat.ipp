@@ -7,11 +7,11 @@ auto model_repeat = smkflow::model::Node{
     "Repeat",
     model_type_transformation,
     {
-        {"a", type_sdf},
+        {"in", type_sdf},
         {"space", type_vec3},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

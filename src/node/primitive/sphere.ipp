@@ -8,7 +8,7 @@ auto model_sphere = smkflow::model::Node{
     model_type_primitive,
     {},
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

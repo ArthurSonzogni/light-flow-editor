@@ -238,23 +238,30 @@ std::string BuildVec3(smkflow::Node* node,
   }
 }
 
-std::string Build(smkflow::Board* board) {
+void Build(smkflow::Board* board, int i) {
   // Find sink (e.g. screen).
+  std::vector<smkflow::Node*> sinks;
   for (int i = 0; i < board->NodeCount(); ++i) {
     smkflow::Node* node = board->NodeAt(i);
 
     if (node->Identifier() != Node::Screen)
       continue;
-
-    Context context;
-    auto out = BuildScreen(node, &context);
-    if (!context.IsImplemented())
-      continue;
-
-    auto widget = RenderWidget::From(node->widget());
-    widget->Build(out);
+    sinks.push_back(node);
   }
-  return "";
+
+  if (sinks.size() == 0)
+    return;
+
+  smkflow::Node* node = sinks[i % sinks.size()];
+  
+  Context context;
+  auto out = BuildScreen(node, &context);
+  if (!context.IsImplemented())
+    return;
+
+  RenderWidget* widget = RenderWidget::From(node->widget());
+  if (widget->code() != out)
+    widget->Build(out);
 }
 
 auto save = [](smkflow::ActionContext* context) {
@@ -275,7 +282,7 @@ auto menu = {
          }),
     Menu("Primitive",
          {
-             MenuEntry("Cube", CreateNode(model_cube)),
+             MenuEntry("Cube", CreateCubeNode()),
              MenuEntry("Sphere", CreateNode(model_sphere)),
              MenuEntry("Torus", CreateNode(model_torus)),
              MenuEntry("Capsule", CreateNode(model_capsule)),
@@ -306,7 +313,7 @@ auto menu = {
              MenuEntry("Color", CreateNode(model_color)),
              MenuEntry("Repeat", CreateNode(model_repeat)),
              MenuEntry("Scale", CreateNode(model_scale)),
-             MenuEntry("Translate", CreateNode(model_translate)),
+             MenuEntry("Translate", CreateTranslateNode()),
              MenuEntry("Rotate", CreateNode(model_rotate)),
          }),
     Menu("Math",
@@ -372,6 +379,8 @@ int main() {
   board->Create(model_intersection)->SetPosition({200, 0});
   board->Create(model_union)->SetPosition({400, 0});
 
+  int step = 0;
+
   std::string previous_shader_code;
   window.ExecuteMainLoop([&] {
     g_time = window.time();
@@ -385,7 +394,8 @@ int main() {
 
     window.Display();
 
-    Build(board.get());
+    Build(board.get(), step);
+    step++;
   });
   return EXIT_SUCCESS;
 }

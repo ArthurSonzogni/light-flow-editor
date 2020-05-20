@@ -12,7 +12,7 @@ auto model_new_vec3 = smkflow::model::Node{
         {"z", type_float},
     },
     {
-        {"out", type_vec3},
+        {"", type_vec3},
     },
     smkflow::VBox({
         smkflow::Slider(-5.f, 5.f, 0.f, "{:.2f}"),

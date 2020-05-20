@@ -11,7 +11,7 @@ auto model_torus = smkflow::model::Node{
         {"r2", type_float},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

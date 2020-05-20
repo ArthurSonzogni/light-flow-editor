@@ -11,7 +11,7 @@ auto model_translate = smkflow::model::Node{
         {"translate", type_vec3},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 
@@ -32,4 +32,15 @@ std::string BuildTranslate(smkflow::Node* node,
       "  vec3 {} = {} - {};\n"
       "{}\n",  //
       inner_b, in_translated, in, translation, inner_a);
+}
+
+smkflow::Action CreateTranslateNode() {
+  return [=](smkflow::ActionContext* context) {
+    auto* translate = context->board()->Create(model_translate);
+    auto* delta = context->board()->Create(model_new_vec3);
+    context->board()->Connect(delta->OutputAt(0), translate->InputAt(1));
+
+    translate->SetPosition(context->cursor());
+    delta->SetPosition(context->cursor() + glm::vec2(-300.f, +50.f));
+  };
 }

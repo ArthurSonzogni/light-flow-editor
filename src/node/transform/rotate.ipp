@@ -7,12 +7,12 @@ auto model_rotate = smkflow::model::Node{
     "rotate",
     model_type_transformation,
     {
-        {"in", type_sdf},
+        {"n", type_sdf},
         {"direction", type_vec3},
         {"angle", type_float},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

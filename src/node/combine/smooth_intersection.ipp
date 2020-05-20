@@ -7,11 +7,11 @@ auto model_smooth_intersection = smkflow::model::Node{
     "Smooth Intersection",
     model_type_fusion,
     {
-        {"a", type_sdf},
-        {"b", type_sdf},
+        {"", type_sdf},
+        {"", type_sdf},
     },
     {
-        {"a+b", type_sdf},
+        {"", type_sdf},
     },
     smkflow::Slider(0.f, 100, 50, "{:.0f}%"),
 };

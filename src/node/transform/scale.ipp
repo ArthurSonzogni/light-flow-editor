@@ -11,7 +11,7 @@ auto model_scale = smkflow::model::Node{
         {"factor", type_float},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

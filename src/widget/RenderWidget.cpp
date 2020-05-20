@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in
 // the LICENSE file.
 
+#include <iostream>
+
 #include "widget/RenderWidget.hpp"
 
 #include <fmt/core.h>
@@ -183,6 +185,24 @@ RenderWidget::RenderWidget(smkflow::Widget::Delegate* delegate)
 }
 
 bool RenderWidget::Step(smk::Input* input, const glm::vec2& cursor) {
+  if (has_new_code_ && !pending_compilation_) {
+    fragment_shader_new_ =
+        smk::Shader::FromString(header + code_ + footer, GL_FRAGMENT_SHADER);
+
+    shader_program_new_ = smk::ShaderProgram();
+    shader_program_new_.AddShader(vertex_shader_);
+    shader_program_new_.AddShader(fragment_shader_new_);
+    shader_program_new_.Link();
+    pending_compilation_ = true;
+    has_new_code_ = false;
+  }
+
+  if (pending_compilation_ && shader_program_new_.IsReady()) {
+    pending_compilation_ = false;
+    fragment_shader_ = std::move(fragment_shader_new_);
+    shader_program_ = std::move(shader_program_new_);
+  }
+
   if (cursor_captured_ && input->IsCursorReleased())
     cursor_captured_.Invalidate();
 
@@ -238,15 +258,7 @@ void RenderWidget::Build(std::string new_code) {
     return;
   if (new_code == code_)
     return;
-  //fmt::print("{}",new_code);
 
   code_ = std::move(new_code);
-
-  fragment_shader_ = smk::Shader::FromString(header + code_ + footer, GL_FRAGMENT_SHADER);
-
-  shader_program_ = smk::ShaderProgram();
-  shader_program_.AddShader(vertex_shader_);
-  shader_program_.AddShader(fragment_shader_);
-  shader_program_.Link();
-  return;
+  has_new_code_ = true;
 }

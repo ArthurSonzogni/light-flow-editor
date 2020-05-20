@@ -13,7 +13,7 @@ auto model_capsule = smkflow::model::Node{
         {"r", type_float},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 

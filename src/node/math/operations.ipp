@@ -7,11 +7,11 @@ auto model_math_add = smkflow::model::Node{
     "Add",
     model_type_math,
     {
-        {"a", type_float},
-        {"b", type_float},
+        {"", type_float},
+        {"", type_float},
     },
     {
-        {"a+b", type_float},
+        {"", type_float},
     },
 };
 
@@ -20,11 +20,11 @@ auto model_math_sub = smkflow::model::Node{
     "Substract",
     model_type_math,
     {
-        {"a", type_float},
-        {"b", type_float},
+        {"", type_float},
+        {"", type_float},
     },
     {
-        {"a-b", type_float},
+        {"", type_float},
     },
 };
 
@@ -33,11 +33,11 @@ auto model_math_mul = smkflow::model::Node{
     "Multiply",
     model_type_math,
     {
-        {"a", type_float},
-        {"b", type_float},
+        {"", type_float},
+        {"", type_float},
     },
     {
-        {"a*b", type_float},
+        {"", type_float},
     },
 };
 
@@ -46,11 +46,11 @@ auto model_math_div = smkflow::model::Node{
     "Divide",
     model_type_math,
     {
-        {"a", type_float},
-        {"b", type_float},
+        {"", type_float},
+        {"", type_float},
     },
     {
-        {"a/b", type_float},
+        {"", type_float},
     },
 };
 

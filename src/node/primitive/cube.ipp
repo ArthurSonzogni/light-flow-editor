@@ -10,7 +10,7 @@ auto model_cube = smkflow::model::Node{
         {"dim", type_vec3},
     },
     {
-        {"out", type_sdf},
+        {"", type_sdf},
     },
 };
 
@@ -29,12 +29,27 @@ std::string BuildCube(smkflow::Node* node,
     }
   )");
   std::string compute_dimensions = "";
-  std::string dimensions = "vec3(0.8f, 0.8f, 0.8f)";
+  std::string dimension = "vec3(0.8f, 0.8f, 0.8f)";
   if (smkflow::Node* node_dimension = node->InputAt(0)->OppositeNode()) {
-    dimensions = context->Identifier();
-    compute_dimensions = BuildVec3(node_dimension, dimensions, context) + "\n";
+    dimension = context->Identifier();
+    compute_dimensions = BuildVec3(node_dimension, dimension, context) + "\n";
   }
 
   return fmt::format("{}  Value {} = Cube({}, {});", compute_dimensions, out,
-                     dimensions, in);
+                     dimension, in);
+}
+
+smkflow::Action CreateCubeNode() {
+  return [=](smkflow::ActionContext* context) {
+    auto* cube = context->board()->Create(model_cube);
+    auto* dimension = context->board()->Create(model_new_vec3);
+    context->board()->Connect(dimension->OutputAt(0), cube->InputAt(0));
+
+    cube->SetPosition(context->cursor());
+    dimension->SetPosition(context->cursor() - glm::vec2(350.f, 0.f));
+
+    auto* box = smkflow::Box(dimension->widget());
+    for (int i = 0; i < 3; ++i)
+      smkflow::Slider(box->ChildAt(i))->SetValue(0.8f);
+  };
 }
