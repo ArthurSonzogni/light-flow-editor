@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <unordered_set>
 #include <iostream>
 #include <set>
 #include <smk/Window.hpp>
@@ -238,6 +239,26 @@ std::string BuildVec3(smkflow::Node* node,
   }
 }
 
+bool IsRecursive(smkflow::Node* node) {
+  std::unordered_set<smkflow::Node*> explored = {node};
+  std::stack<smkflow::Node*> pending;
+  pending.push(node);
+  while (pending.size()) {
+    smkflow::Node* node = pending.top();
+    pending.pop();
+    for (int i = 0; i < node->InputCount(); ++i) {
+      smkflow::Node* input = node->InputAt(i)->OppositeNode();
+      if (!input)
+        continue;
+      if (explored.count(input))
+        return true;
+      explored.insert(input);
+      pending.push(input);
+    }
+  }
+  return false;
+}
+
 void Build(smkflow::Board* board, int i) {
   // Find sink (e.g. screen).
   std::vector<smkflow::Node*> sinks;
@@ -253,6 +274,10 @@ void Build(smkflow::Board* board, int i) {
     return;
 
   smkflow::Node* node = sinks[i % sinks.size()];
+
+  // Check the node is not recursive.
+  if (IsRecursive(node))
+    return;
   
   Context context;
   auto out = BuildScreen(node, &context);
