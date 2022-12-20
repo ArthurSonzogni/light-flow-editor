@@ -6,7 +6,6 @@
 
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
-#include <unordered_set>
 #include <iostream>
 #include <set>
 #include <smk/Window.hpp>
@@ -20,6 +19,8 @@
 #include <smkflow/widget/Slider.hpp>
 #include <smkflow/widget/Widget.hpp>
 #include <sstream>
+#include <stack>
+#include <unordered_set>
 
 #include "widget/RenderWidget.hpp"
 
@@ -410,7 +411,7 @@ int main() {
   window.ExecuteMainLoop([&] {
     g_time = window.time();
 
-    window.shader_program_2d()->Use();
+    window.shader_program_2d().Use();
     window.PoolEvents();
     window.Clear(smkflow::color::background);
 

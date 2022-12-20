@@ -234,7 +234,7 @@ glm::vec2 RenderWidget::ComputeDimensions() {
 }
 
 void RenderWidget::Draw(smk::RenderTarget* target) {
-  target->SetShaderProgram(&shader_program_);
+  target->SetShaderProgram(shader_program_);
 
   shader_program_.Use();
   shader_program_.SetUniform("time", g_time);

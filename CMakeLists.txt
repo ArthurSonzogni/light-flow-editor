@@ -26,14 +26,6 @@ if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
 
   set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " -s TOTAL_MEMORY=8MB")
 
-  # Release flags
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " --closure 1")
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " -s WASM=1")
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " --js-opts 3")
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " --llvm-lto 3")
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " --llvm-opts 3")
-  set_property(TARGET lightfloweditor APPEND_STRING PROPERTY LINK_FLAGS  " -O3")
-
   # Copy the index.html file.
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/index.html
@@ -45,6 +37,11 @@ if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
     ${CMAKE_CURRENT_SOURCE_DIR}/src/style.css
     ${CMAKE_CURRENT_BINARY_DIR}/style.css
     COPYONLY
+  )
+
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/run_webassembly.py
+    ${CMAKE_CURRENT_BINARY_DIR}/run_webassembly.py
   )
 
   # Allow some files to be fetched.
